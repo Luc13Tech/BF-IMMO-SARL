@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Loader2, Send, CheckCircle2 } from 'lucide-react';
 import { getContent, submitLead } from '../api/client';
+import MapEmbed from '../components/ui/MapEmbed';
 
 export default function Contact() {
   const [content, setContent] = useState({});
@@ -81,6 +82,10 @@ export default function Contact() {
           >
             Discuter sur WhatsApp
           </motion.a>
+
+          <div className="mt-10">
+            <MapEmbed />
+          </div>
         </div>
 
         <motion.div

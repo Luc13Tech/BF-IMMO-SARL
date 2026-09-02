@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Eye, HeartHandshake } from 'lucide-react';
 import { getContent } from '../api/client';
+import MapEmbed from '../components/ui/MapEmbed';
 
 const VALUES = [
   { icon: Target, title: 'Rigueur', text: "Chaque dossier est suivi avec précision, du premier contact à la signature." },
@@ -91,6 +92,10 @@ export default function About() {
               {content['contact.address'] || 'Cité Belle Ville, Villa N°102KMV, Sicap Keur Massar, Dakar'}
             </p>
           </motion.div>
+        </div>
+
+        <div className="container-bf mt-8">
+          <MapEmbed />
         </div>
       </section>
     </div>
