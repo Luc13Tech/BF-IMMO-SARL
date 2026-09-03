@@ -63,7 +63,7 @@ export function UserAuthProvider({ children }) {
 
   async function toggleFavorite(property) {
     if (!user) return { requiresAuth: true };
-    // mise à jour optimiste
+    // mise à jour optimiste prêt 
     const already = isFavorite(property._id);
     setFavorites((list) =>
       already ? list.filter((f) => f._id !== property._id) : [...list, property]
