@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { BedDouble, Bath, Ruler, MapPin } from 'lucide-react';
+import { BedDouble, Bath, Ruler, MapPin, Heart } from 'lucide-react';
+import { useUserAuth } from '../../context/UserAuthContext';
 
 const STATUS_STYLES = {
   disponible: 'bg-emerald-50 text-emerald-700',
@@ -22,6 +23,22 @@ const STATUS_LABELS = {
 export default function PropertyCard({ property, index = 0 }) {
   const cover = property.images?.[0]?.url;
   const offset = index % 3 === 1 ? 'lg:-translate-y-3' : '';
+  const { isAuthenticated, isFavorite, toggleFavorite } = useUserAuth();
+  const favorited = isFavorite(property._id);
+
+  async function handleFavoriteClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      window.location.href = '/connexion';
+      return;
+    }
+    try {
+      await toggleFavorite(property);
+    } catch {
+      // l'échec silencieux suffit ici : loadFavorites() a déjà resynchronisé l'état
+    }
+  }
 
   return (
     <motion.div
@@ -52,9 +69,23 @@ export default function PropertyCard({ property, index = 0 }) {
           >
             {STATUS_LABELS[property.status] || 'Disponible'}
           </span>
-          <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
-            {property.listingType === 'location' ? 'À louer' : 'À vendre'}
-          </span>
+
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
+              {property.listingType === 'location' ? 'À louer' : 'À vendre'}
+            </span>
+            <motion.button
+              onClick={handleFavoriteClick}
+              whileTap={{ scale: 0.8 }}
+              aria-label={favorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shrink-0"
+            >
+              <Heart
+                size={14}
+                className={favorited ? 'fill-brand-red text-brand-red' : 'text-ink/50'}
+              />
+            </motion.button>
+          </div>
         </div>
 
         <div className="p-6">
