@@ -92,3 +92,28 @@ export const updateAIKnowledge = (id, payload) =>
   api.put(`/ai-assistant/admin/knowledge/${id}`, payload).then((r) => r.data.data);
 export const deleteAIKnowledge = (id) =>
   api.delete(`/ai-assistant/admin/knowledge/${id}`).then((r) => r.data);
+
+// ===== Comptes utilisateurs publics =====
+// Instance séparée : utilise le token utilisateur ("bfimmo_user_token"),
+// jamais le token admin, même si les deux sont stockés dans le même navigateur.
+export const userApi = axios.create({
+  baseURL: `${API_URL}/api`,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+userApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('bfimmo_user_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const registerUser = (payload) =>
+  userApi.post('/users/register', payload).then((r) => r.data);
+export const loginUser = (email, password) =>
+  userApi.post('/users/login', { email, password }).then((r) => r.data);
+export const getUserMe = () => userApi.get('/users/me').then((r) => r.data.user);
+export const getUserFavorites = () => userApi.get('/users/favorites').then((r) => r.data.data);
+export const toggleUserFavorite = (propertyId) =>
+  userApi.put(`/users/favorites/${propertyId}`).then((r) => r.data);
