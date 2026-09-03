@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, Heart } from 'lucide-react';
 import logo from '../../assets/images/logo.png';
+import { useUserAuth } from '../../context/UserAuthContext';
 
 const NAV = [
   { label: 'Achat', to: '/services/achat' },
@@ -18,6 +19,7 @@ const NAV = [
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, user, favorites } = useUserAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -86,15 +88,43 @@ export default function Header() {
                 )}
               </NavLink>
             ))}
+
+            <Link
+              to={isAuthenticated ? '/mon-compte' : '/connexion'}
+              className="relative flex items-center gap-2 pl-5 ml-2 border-l border-white/15 text-white/75 hover:text-white transition-colors"
+              aria-label={isAuthenticated ? 'Mon compte' : 'Se connecter'}
+            >
+              <span className="relative">
+                <User size={18} />
+                {isAuthenticated && favorites.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-brand-red text-[8px] font-bold flex items-center justify-center text-white">
+                    {favorites.length}
+                  </span>
+                )}
+              </span>
+              <span className="text-[13px] font-medium uppercase tracking-wide">
+                {isAuthenticated ? user?.fullName?.split(' ')[0] : 'Connexion'}
+              </span>
+            </Link>
           </nav>
 
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Ouvrir le menu"
-            className="lg:hidden text-white p-2"
-          >
-            <Menu size={26} />
-          </button>
+          <div className="flex items-center gap-4 lg:hidden">
+            <Link to={isAuthenticated ? '/mon-compte' : '/connexion'} className="text-white p-1 relative">
+              <User size={22} />
+              {isAuthenticated && favorites.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-brand-red text-[8px] font-bold flex items-center justify-center text-white">
+                  {favorites.length}
+                </span>
+              )}
+            </Link>
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Ouvrir le menu"
+              className="text-white p-2"
+            >
+              <Menu size={26} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -131,6 +161,21 @@ export default function Header() {
                   </NavLink>
                 </motion.div>
               ))}
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 + NAV.length * 0.06 }}
+              >
+                <NavLink
+                  to={isAuthenticated ? '/mon-compte' : '/connexion'}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 py-3.5 text-2xl font-semibold text-brand-gold"
+                  style={{ fontFamily: '"Times New Roman", Times, serif' }}
+                >
+                  <User size={20} />
+                  {isAuthenticated ? 'Mon compte' : 'Connexion'}
+                </NavLink>
+              </motion.div>
             </nav>
           </motion.div>
         )}
