@@ -10,6 +10,10 @@ import Properties from './pages/Properties';
 import PropertyDetail from './pages/PropertyDetail';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Account from './pages/Account';
+import RequireUser from './components/ui/RequireUser';
 import { getContent } from './api/client';
 
 import AdminLogin from './admin/AdminLogin';
@@ -37,6 +41,16 @@ function PublicLayout({ content }) {
           <Route path="/biens/:id" element={<PropertyDetail />} />
           <Route path="/a-propos" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/connexion" element={<Login />} />
+          <Route path="/inscription" element={<Register />} />
+          <Route
+            path="/mon-compte"
+            element={
+              <RequireUser>
+                <Account />
+              </RequireUser>
+            }
+          />
         </Routes>
       </main>
 
