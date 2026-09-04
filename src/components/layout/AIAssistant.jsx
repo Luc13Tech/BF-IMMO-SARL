@@ -18,9 +18,9 @@ async function callAssistant(context, history, question) {
   // TODO : remplacer par l'appel réel à ton backend IA.
   // Exemple attendu : POST /api/ai-assistant/ask { context, history, question }
   await new Promise((r) => setTimeout(r, 900));
-  return `Je suis en cours de configuration. Une fois connecté, je pourrai répondre à propos de : ${context.services
+  return `Je suis en cours de configuration. Une fois connecté, je pourrai répondre à propos de ${context.services
     .map((s) => s.name)
-    .join(', ')}. Vous pouvez aussi joindre BF IMMO directement au ${context.contact.whatsapp}.`;
+    .join(', ')} Vous pouvez aussi joindre BF IMMO directement au ${context.contact.whatsapp}.`;
 }
 
 export default function AIAssistant({ open, onClose }) {
