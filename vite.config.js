@@ -24,6 +24,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Indispensable pour une SPA : toute navigation vers une page qui
+        // n'est pas en cache (ex: /admin/login, /biens/:id) doit retomber
+        // sur index.html pour que React Router prenne le relais, au lieu
+        // que le Service Worker ne renvoie une erreur.
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],
