@@ -12,7 +12,7 @@ const roofDraw = {
   }),
 };
 
-export default function Hero({ title, subtitle }) {
+export default function Hero({ title, subtitle, featuredProperty }) {
   return (
     <section className="relative bg-ink overflow-hidden pt-36 pb-40 md:pt-44 md:pb-56">
       {/* blob organique animé, jamais un simple dégradé plaqué */}
@@ -144,16 +144,40 @@ export default function Hero({ title, subtitle }) {
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               className="bg-white/95 backdrop-blur rounded-[1.75rem] rounded-tr-md shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden"
             >
-              <div className="h-32 bg-gradient-to-br from-ink-soft to-ink relative">
-                <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white text-[10px] font-mono uppercase tracking-wide text-emerald-700">
-                  Disponible
-                </span>
-              </div>
-              <div className="p-5">
-                <p className="font-sans font-bold text-ink text-[15px]">Villa 4 pièces</p>
-                <p className="font-mono text-[10.5px] text-ink/50 mt-1">Sicap Keur Massar, Dakar</p>
-                <p className="font-sans font-bold text-brand-gold mt-2.5">85 000 000 FCFA</p>
-              </div>
+              {featuredProperty ? (
+                <>
+                  <div className="h-32 bg-gradient-to-br from-ink-soft to-ink relative overflow-hidden">
+                    {featuredProperty.images?.[0]?.url && (
+                      <img
+                        src={featuredProperty.images[0].url}
+                        alt={featuredProperty.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white text-[10px] font-mono uppercase tracking-wide text-emerald-700">
+                      {featuredProperty.status === 'nouveau' ? 'Nouveau' : 'Disponible'}
+                    </span>
+                  </div>
+                  <div className="p-5">
+                    <p className="font-sans font-bold text-ink text-[15px]">{featuredProperty.title}</p>
+                    <p className="font-mono text-[10.5px] text-ink/50 mt-1">{featuredProperty.location}</p>
+                    <p className="font-sans font-bold text-brand-gold mt-2.5">
+                      {Number(featuredProperty.price).toLocaleString('fr-FR')}{' '}
+                      {featuredProperty.priceUnit || 'FCFA'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="p-6 text-center">
+                  <p className="font-sans font-semibold text-ink text-[14px]">
+                    Vos biens s'affichent ici
+                  </p>
+                  <p className="text-ink/45 text-[11.5px] font-light mt-1.5 leading-relaxed">
+                    Ajoutez un bien depuis l'espace admin et cochez « Mettre en avant » pour
+                    qu'il apparaisse à cet endroit.
+                  </p>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         </div>
