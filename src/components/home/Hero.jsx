@@ -13,9 +13,14 @@ const roofDraw = {
 };
 
 export default function Hero({ title, subtitle, featuredProperty }) {
+  // La première ligne reste éditable depuis l'admin (Contenu du site → hero.title).
+  // La deuxième ligne est la signature de marque fixe "BF IMMO - Sénégal",
+  // avec le même code couleur que le logo dans le header : BF en blanc,
+  // IMMO en rouge, et Sénégal repris dans l'or du trait animé en dessous.
+  const firstLine = title?.split(',')[0] || 'Votre bien';
+
   return (
     <section className="relative bg-ink overflow-hidden pt-36 pb-40 md:pt-44 md:pb-56">
-      {/* blob organique animé, jamais un simple dégradé plaqué */}
       <motion.div
         aria-hidden
         className="absolute -top-32 -right-20 w-[560px] h-[560px] rounded-[45%_55%_65%_35%/40%_45%_55%_60%] bg-gradient-to-br from-brand-gold/25 via-brand-red/10 to-transparent blur-3xl"
@@ -49,15 +54,17 @@ export default function Hero({ title, subtitle, featuredProperty }) {
               transition={{ duration: 0.8, delay: 0.15 }}
               className="block"
             >
-              {title?.split(',')[0] || 'Votre bien'},
+              {firstLine},
             </motion.span>
             <motion.span
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="relative inline-block text-brand-red mt-1"
+              className="relative inline-block mt-1"
             >
-              {title?.split(',')[1]?.trim() || 'notre engagement'}
+              <span className="text-white">BF</span>{' '}
+              <span className="text-brand-red">IMMO</span>{' '}
+              <span className="text-brand-gold">- Sénégal</span>
               <svg
                 className="absolute left-0 -bottom-2 w-full h-3"
                 viewBox="0 0 300 12"
@@ -183,7 +190,6 @@ export default function Hero({ title, subtitle, featuredProperty }) {
         </div>
       </div>
 
-      {/* transition organique vers la section suivante — jamais une ligne droite */}
       <svg
         className="absolute bottom-0 left-0 w-full text-offwhite"
         style={{ transform: 'translateY(1px)' }}
