@@ -24,7 +24,9 @@ import PropertiesManager from './admin/PropertiesManager';
 import LeadsManager from './admin/LeadsManager';
 import ContentManager from './admin/ContentManager';
 import AIKnowledgeManager from './admin/AIKnowledgeManager';
+import AuditLogManager from './admin/AuditLogManager';
 import ProtectedRoute from './admin/ProtectedRoute';
+import RequireRole from './components/ui/RequireRole';
 
 function PublicLayout({ content }) {
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -90,6 +92,14 @@ export default function App() {
         <Route path="demandes" element={<LeadsManager />} />
         <Route path="contenu" element={<ContentManager />} />
         <Route path="assistant" element={<AIKnowledgeManager />} />
+        <Route
+          path="audit"
+          element={
+            <RequireRole roles={['superadmin']}>
+              <AuditLogManager />
+            </RequireRole>
+          }
+        />
       </Route>
 
       {/* Site public */}
