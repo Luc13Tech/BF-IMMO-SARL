@@ -7,7 +7,6 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attache automatiquement le token admin s'il existe
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('bfimmo_admin_token');
   if (token) {
@@ -34,6 +33,7 @@ export const getAIContext = () => api.get('/ai-assistant/context').then((r) => r
 // ===== Admin =====
 export const login = (email, password) =>
   api.post('/auth/login', { email, password }).then((r) => r.data);
+export const adminLogout = () => api.post('/auth/logout').then((r) => r.data);
 export const getMe = () => api.get('/auth/me').then((r) => r.data.admin);
 
 export const getAllServicesAdmin = () => api.get('/services/admin/all').then((r) => r.data.data);
@@ -53,6 +53,7 @@ export const deleteProperty = (id) =>
 
 export const getAllLeads = (params = {}) =>
   api.get('/leads/admin/all', { params }).then((r) => r.data.data);
+export const getLead = (id) => api.get(`/leads/admin/${id}`).then((r) => r.data.data);
 export const updateLeadStatus = (id, status) =>
   api.put(`/leads/admin/${id}/status`, { status }).then((r) => r.data.data);
 export const deleteLead = (id) => api.delete(`/leads/admin/${id}`).then((r) => r.data);
@@ -93,9 +94,11 @@ export const updateAIKnowledge = (id, payload) =>
 export const deleteAIKnowledge = (id) =>
   api.delete(`/ai-assistant/admin/knowledge/${id}`).then((r) => r.data);
 
+// ===== Journal d'audit (superadmin uniquement) =====
+export const getAuditLogs = (params = {}) =>
+  api.get('/admin-audit', { params }).then((r) => r.data);
+
 // ===== Comptes utilisateurs publics =====
-// Instance séparée : utilise le token utilisateur ("bfimmo_user_token"),
-// jamais le token admin, même si les deux sont stockés dans le même navigateur.
 export const userApi = axios.create({
   baseURL: `${API_URL}/api`,
   headers: { 'Content-Type': 'application/json' },
