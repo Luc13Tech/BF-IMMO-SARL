@@ -8,11 +8,13 @@ import {
   Inbox,
   FileText,
   Bot,
+  ShieldCheck,
   LogOut,
   Menu,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { adminLogout } from '../api/client';
 import logo from '../assets/images/logo.png';
 
 const NAV = [
@@ -29,7 +31,20 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  function handleLogout() {
+  // "Journal de surveillance" n'apparaît que pour le rôle superadmin.
+  // Rappel : ceci est uniquement cosmétique — la vraie protection est
+  // côté backend (requireRole sur /api/admin-audit).
+  const navItems =
+    admin?.role === 'superadmin'
+      ? [...NAV, { to: '/admin/audit', label: 'Journal de surveillance', icon: ShieldCheck }]
+      : NAV;
+
+  async function handleLogout() {
+    try {
+      await adminLogout(); // trace l'événement LOGOUT avant de vider le token
+    } catch {
+      // même en cas d'échec réseau, on déconnecte quand même localement
+    }
     logout();
     navigate('/admin/login');
   }
@@ -47,7 +62,7 @@ export default function AdminLayout() {
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1">
-        {NAV.map((item) => (
+        {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -69,6 +84,9 @@ export default function AdminLayout() {
 
       <div className="px-6 py-5 border-t border-white/10">
         <p className="text-white/40 text-[11px] font-mono truncate">{admin?.email}</p>
+        <p className="text-white/25 text-[10px] font-mono uppercase tracking-wide mt-0.5">
+          {admin?.role === 'superadmin' ? 'Superadmin' : 'Administrateur'}
+        </p>
         <button
           onClick={handleLogout}
           className="mt-3 flex items-center gap-2 text-white/60 hover:text-brand-red text-sm font-medium transition-colors"
@@ -81,10 +99,8 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-offwhite flex">
-      {/* Sidebar desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-ink shrink-0">{SidebarContent}</aside>
 
-      {/* Sidebar mobile */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.aside
