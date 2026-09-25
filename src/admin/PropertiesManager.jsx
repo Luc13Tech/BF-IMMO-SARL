@@ -130,6 +130,8 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
             >
               <option value="vente">À vendre</option>
               <option value="location">À louer</option>
+              <option value="location">Location par nuitée</option>
+              <option value="location">Location journalière</option>
             </select>
           </div>
 
