@@ -72,7 +72,15 @@ export default function PropertyCard({ property, index = 0 }) {
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
-              {property.listingType === 'location' ? 'À louer' : 'À vendre' : 'Nuitée’ : 'Réalisation’}
+              {property.listingType === 'location'
+                ? 'À louer'
+                : property.listingType === 'vente'
+                ? 'À vendre'
+                : property.listingType === 'Nuitée'
+                ? 'Nuitée'
+                : property.listingType === 'Location journalière'
+                ? 'Location journalière'
+                : 'Réalisation'}
             </span>
             <motion.button
               onClick={handleFavoriteClick}
@@ -98,7 +106,9 @@ export default function PropertyCard({ property, index = 0 }) {
 
           <p className="font-sans font-extrabold text-brand-gold text-lg mt-4">
             {Number(property.price).toLocaleString('fr-FR')} {property.priceUnit || 'FCFA'}
-            {property.listingType === 'location' && <span className="text-xs font-normal text-ink/40"> /mois</span>}
+            {property.listingType === 'location' && (
+              <span className="text-xs font-normal text-ink/40"> /mois</span>
+            )}
           </p>
 
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-line text-ink/55 text-[12.5px]">
