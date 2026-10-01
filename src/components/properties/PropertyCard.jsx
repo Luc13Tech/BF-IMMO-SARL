@@ -45,7 +45,11 @@ export default function PropertyCard({ property, index = 0 }) {
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: (index % 6) * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      transition={{
+        delay: (index % 6) * 0.08,
+        duration: 0.55,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       className={offset}
     >
       <Link
@@ -62,6 +66,7 @@ export default function PropertyCard({ property, index = 0 }) {
               transition={{ duration: 0.6, ease: 'easeOut' }}
             />
           )}
+
           <span
             className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-[10.5px] font-mono uppercase tracking-wide ${
               STATUS_STYLES[property.status] || STATUS_STYLES.disponible
@@ -82,15 +87,24 @@ export default function PropertyCard({ property, index = 0 }) {
                 ? 'Location journalière'
                 : 'Réalisation'}
             </span>
+
             <motion.button
               onClick={handleFavoriteClick}
               whileTap={{ scale: 0.8 }}
-              aria-label={favorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              aria-label={
+                favorited
+                  ? 'Retirer des favoris'
+                  : 'Ajouter aux favoris'
+              }
               className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shrink-0"
             >
               <Heart
                 size={14}
-                className={favorited ? 'fill-brand-red text-brand-red' : 'text-ink/50'}
+                className={
+                  favorited
+                    ? 'fill-brand-red text-brand-red'
+                    : 'text-ink/50'
+                }
               />
             </motion.button>
           </div>
@@ -100,15 +114,26 @@ export default function PropertyCard({ property, index = 0 }) {
           <h3 className="font-sans font-bold text-[17px] text-ink group-hover:text-brand-red transition-colors">
             {property.title}
           </h3>
+
           <p className="flex items-center gap-1.5 font-mono text-[11px] text-ink/50 mt-2">
             <MapPin size={12} /> {property.location}
           </p>
 
           <p className="font-sans font-extrabold text-brand-gold text-lg mt-4">
-            {Number(property.price).toLocaleString('fr-FR')} {property.priceUnit || 'FCFA'}
-            {property.listingType === 'location' && (
-              <span className="text-xs font-normal text-ink/40"> /mois</span>
-            )}
+            {property.price != null && property.price !== ''
+              ? `${Number(property.price).toLocaleString('fr-FR')} ${
+                  property.priceUnit || 'FCFA'
+                }`
+              : 'Prix sur demande'}
+
+            {property.price != null &&
+              property.price !== '' &&
+              property.listingType === 'location' && (
+                <span className="text-xs font-normal text-ink/40">
+                  {' '}
+                  /mois
+                </span>
+              )}
           </p>
 
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-line text-ink/55 text-[12.5px]">
@@ -117,11 +142,13 @@ export default function PropertyCard({ property, index = 0 }) {
                 <BedDouble size={15} /> {property.bedrooms}
               </span>
             )}
+
             {property.bathrooms > 0 && (
               <span className="flex items-center gap-1.5">
                 <Bath size={15} /> {property.bathrooms}
               </span>
             )}
+
             {property.surface > 0 && (
               <span className="flex items-center gap-1.5">
                 <Ruler size={15} /> {property.surface} m²
