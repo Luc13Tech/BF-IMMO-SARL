@@ -25,7 +25,7 @@ export default function PropertyDetail() {
   async function handleSubmit(e) {
     e.preventDefault();
     setSendStatus('sending');
-    const service = property.listingType === 'location' ? 'location' : 'achat';
+    const service = property.listingType === 'location' ? 'location' : 'achat' : 'Nuitée’: 'Réalisation’;
     try {
       await submitLead(service, {
         ...form,
