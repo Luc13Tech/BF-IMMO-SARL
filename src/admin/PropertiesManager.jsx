@@ -77,11 +77,21 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
     setSaving(true);
 
     try {
+      const payload = {
+        ...draft,
+        price:
+          draft.price === '' ||
+          draft.price === null ||
+          draft.price === undefined
+            ? null
+            : Number(draft.price),
+      };
+
       if (draft._id) {
-        const updated = await updateProperty(draft._id, draft);
+        const updated = await updateProperty(draft._id, payload);
         onSaved(updated);
       } else {
-        const created = await createProperty(draft);
+        const created = await createProperty(payload);
         onSaved(created, true);
       }
 
@@ -472,7 +482,11 @@ export default function PropertiesManager() {
                 </p>
 
                 <p className="text-brand-gold font-bold text-sm mt-2">
-                  {Number(p.price).toLocaleString('fr-FR')} FCFA
+                  {p.price != null && p.price !== ''
+                    ? `${Number(p.price).toLocaleString('fr-FR')} ${
+                        p.priceUnit || 'FCFA'
+                      }`
+                    : 'Prix sur demande'}
                 </p>
 
                 <div className="flex items-center gap-2 mt-4">
