@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, BedDouble, Bath, Ruler, MapPin, Loader2, Send, CheckCircle2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  BedDouble,
+  Bath,
+  Ruler,
+  MapPin,
+  Loader2,
+  Send,
+  CheckCircle2,
+} from 'lucide-react';
 import { getProperty, submitLead } from '../api/client';
 import PropertyGallery from '../components/properties/PropertyGallery';
 
@@ -9,7 +18,12 @@ export default function PropertyDetail() {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [status, setStatus] = useState('loading');
-  const [form, setForm] = useState({ fullName: '', phone: '', email: '', message: '' });
+  const [form, setForm] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    message: '',
+  });
   const [sendStatus, setSendStatus] = useState('idle');
 
   useEffect(() => {
@@ -60,8 +74,13 @@ export default function PropertyDetail() {
   if (status === 'not-found') {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
-        <h1 className="font-sans font-extrabold text-2xl text-ink">Bien introuvable</h1>
-        <Link to="/biens" className="mt-6 text-brand-red font-semibold hover:underline">
+        <h1 className="font-sans font-extrabold text-2xl text-ink">
+          Bien introuvable
+        </h1>
+        <Link
+          to="/biens"
+          className="mt-6 text-brand-red font-semibold hover:underline"
+        >
           Retour aux biens
         </Link>
       </div>
@@ -81,21 +100,32 @@ export default function PropertyDetail() {
         <div className="grid lg:grid-cols-[1.4fr_1fr] gap-10">
           {/* Galerie */}
           <div>
-            <PropertyGallery images={property.images} title={property.title} />
+            <PropertyGallery
+              images={property.images}
+              title={property.title}
+            />
 
             <div className="flex items-start justify-between gap-4 mt-8">
               <div>
-                <h1 className="font-sans font-extrabold text-3xl text-ink">{property.title}</h1>
+                <h1 className="font-sans font-extrabold text-3xl text-ink">
+                  {property.title}
+                </h1>
                 <p className="flex items-center gap-1.5 text-ink/50 font-mono text-[12px] mt-2">
                   <MapPin size={13} /> {property.location}
                 </p>
               </div>
+
               <p className="font-sans font-extrabold text-brand-gold text-xl sm:text-2xl whitespace-nowrap">
-                {Number(property.price).toLocaleString('fr-FR')}
-                <span className="block text-[11px] font-normal text-ink/40 text-right">
-                  {property.priceUnit || 'FCFA'}
-                  {property.listingType === 'location' && ' /mois'}
-                </span>
+                {property.price != null && property.price !== ''
+                  ? Number(property.price).toLocaleString('fr-FR')
+                  : 'Prix sur demande'}
+
+                {property.price != null && property.price !== '' && (
+                  <span className="block text-[11px] font-normal text-ink/40 text-right">
+                    {property.priceUnit || 'FCFA'}
+                    {property.listingType === 'location' && ' /mois'}
+                  </span>
+                )}
               </p>
             </div>
 
@@ -105,11 +135,13 @@ export default function PropertyDetail() {
                   <BedDouble size={17} /> {property.bedrooms} chambres
                 </span>
               )}
+
               {property.bathrooms > 0 && (
                 <span className="flex items-center gap-2">
                   <Bath size={17} /> {property.bathrooms} sdb
                 </span>
               )}
+
               {property.surface > 0 && (
                 <span className="flex items-center gap-2">
                   <Ruler size={17} /> {property.surface} m²
@@ -118,7 +150,9 @@ export default function PropertyDetail() {
             </div>
 
             {property.description && (
-              <p className="mt-6 text-ink/70 font-light leading-relaxed">{property.description}</p>
+              <p className="mt-6 text-ink/70 font-light leading-relaxed">
+                {property.description}
+              </p>
             )}
           </div>
 
@@ -127,7 +161,10 @@ export default function PropertyDetail() {
             <div className="bg-white rounded-[26px] shadow-soft p-7 sticky top-28">
               {sendStatus === 'success' ? (
                 <div className="text-center py-6">
-                  <CheckCircle2 size={32} className="text-emerald-600 mx-auto mb-3" />
+                  <CheckCircle2
+                    size={32}
+                    className="text-emerald-600 mx-auto mb-3"
+                  />
                   <p className="font-bold text-ink">Demande envoyée</p>
                   <p className="text-ink/55 text-sm mt-1 font-light">
                     BF IMMO vous recontacte rapidement au sujet de ce bien.
@@ -135,36 +172,63 @@ export default function PropertyDetail() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <h3 className="font-sans font-bold text-lg text-ink">Intéressé par ce bien ?</h3>
+                  <h3 className="font-sans font-bold text-lg text-ink">
+                    Intéressé par ce bien ?
+                  </h3>
+
                   <input
                     required
                     placeholder="Nom complet"
                     value={form.fullName}
-                    onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        fullName: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 rounded-xl border border-line focus:border-brand-gold outline-none text-sm"
                   />
+
                   <input
                     required
                     type="tel"
                     placeholder="Téléphone"
                     value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        phone: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 rounded-xl border border-line focus:border-brand-gold outline-none text-sm"
                   />
+
                   <input
                     type="email"
                     placeholder="Email (optionnel)"
                     value={form.email}
-                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        email: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 rounded-xl border border-line focus:border-brand-gold outline-none text-sm"
                   />
+
                   <textarea
                     placeholder="Message (optionnel)"
                     rows={3}
                     value={form.message}
-                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        message: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 rounded-xl border border-line focus:border-brand-gold outline-none text-sm"
                   />
+
                   <motion.button
                     type="submit"
                     disabled={sendStatus === 'sending'}
