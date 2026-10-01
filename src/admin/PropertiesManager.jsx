@@ -117,7 +117,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
               onChange={(e) => setDraft({ ...draft, type: e.target.value })}
               className="px-4 py-3 rounded-xl border border-line text-sm outline-none"
             >
-              {['villa', 'appartement', 'terrain', 'bureau', 'commerce', 'autre'].map((t) => (
+              {['villa', 'appartement', 'terrain', 'bureau', 'commerce', ’Réalisation’, 'autre'].map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -130,8 +130,9 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
             >
               <option value="vente">À vendre</option>
               <option value="location">À louer</option>
-              <option value="location">Location par nuitée</option>
-              <option value="location">Location journalière</option>
+              <option value="location nuitée">Location par nuitée</option>
+              <option value="location journalière">Location journalière</option>
+              <option value="location">Autre</option>
             </select>
           </div>
 
