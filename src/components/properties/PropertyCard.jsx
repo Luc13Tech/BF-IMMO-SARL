@@ -72,7 +72,7 @@ export default function PropertyCard({ property, index = 0 }) {
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
-              {property.listingType === 'location' ? 'À louer' : 'À vendre'}
+              {property.listingType === 'location' ? 'À louer' : 'À vendre' : 'Nuitée’ : 'Réalisation’}
             </span>
             <motion.button
               onClick={handleFavoriteClick}
