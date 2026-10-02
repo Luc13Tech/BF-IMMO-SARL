@@ -6,7 +6,7 @@ import logo from '../../assets/images/logo.png';
 export default function Footer({ content = {} }) {
   const phone = content['contact.phone'] || '+221 33 813 42 65';
   const whatsapp = content['contact.whatsapp'] || '+221 77 829 41 42';
-  const email = content['contact.email'] || 'bfimmo@gmail.com';
+  const email = content['contact.email'] || 'Contact@bfimmo-senegal.com';
   const address =
     content['contact.address'] || 'Cité Belle Ville, Villa N°102KMV, Sicap Keur Massar, Dakar';
   const rc = content['legal.rc'] || 'SN-DKR-2024-B-27236';
