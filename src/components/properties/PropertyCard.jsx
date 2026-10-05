@@ -10,6 +10,7 @@ const STATUS_STYLES = {
   sous_offre: 'bg-red-50 text-brand-redDark',
   loue: 'bg-ink/10 text-ink/60',
   vendu: 'bg-ink/10 text-ink/60',
+  'Réalisation en cours': 'bg-blue-50 text-blue-700',
 };
 
 const STATUS_LABELS = {
@@ -18,6 +19,7 @@ const STATUS_LABELS = {
   sous_offre: 'Sous offre',
   loue: 'Loué',
   vendu: 'Vendu',
+  'Réalisation en cours': 'Réalisation en cours',
 };
 
 export default function PropertyCard({ property, index = 0 }) {
@@ -77,7 +79,9 @@ export default function PropertyCard({ property, index = 0 }) {
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
-              {property.listingType === 'location'
+              {property.status === 'Réalisation en cours'
+                ? 'Réalisation en cours'
+                : property.listingType === 'location'
                 ? 'À louer'
                 : property.listingType === 'vente'
                 ? 'À vendre'
