@@ -49,7 +49,7 @@ export default function PropertyDetail() {
         ? 'Nuitée'
         : property.listingType === 'Location journalière'
         ? 'Location journalière'
-        : 'Réalisation';
+        : 'Réalisation en cours';
 
     try {
       await submitLead(service, {
