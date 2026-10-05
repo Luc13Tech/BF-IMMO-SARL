@@ -158,7 +158,6 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
                 'terrain',
                 'bureau',
                 'commerce',
-                'Réalisation en cours',
                 'autre',
               ].map((t) => (
                 <option key={t} value={t}>
