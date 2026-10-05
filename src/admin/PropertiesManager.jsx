@@ -158,7 +158,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
                 'terrain',
                 'bureau',
                 'commerce',
-                'Réalisation',
+                'Réalisation en cours',
                 'autre',
               ].map((t) => (
                 <option key={t} value={t}>
@@ -522,3 +522,4 @@ export default function PropertiesManager() {
     </div>
   );
 }
+
