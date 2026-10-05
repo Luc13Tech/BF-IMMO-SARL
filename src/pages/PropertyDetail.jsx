@@ -41,7 +41,9 @@ export default function PropertyDetail() {
     setSendStatus('sending');
 
     const service =
-      property.listingType === 'location'
+      property.status === 'Réalisation en cours'
+        ? 'Réalisation en cours'
+        : property.listingType === 'location'
         ? 'location'
         : property.listingType === 'vente'
         ? 'achat'
