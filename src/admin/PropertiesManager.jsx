@@ -211,6 +211,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
                 'sous_offre',
                 'loue',
                 'vendu',
+                'Réalisation en cours',
               ].map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -522,4 +523,3 @@ export default function PropertiesManager() {
     </div>
   );
 }
-
