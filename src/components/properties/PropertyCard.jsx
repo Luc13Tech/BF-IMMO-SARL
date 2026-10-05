@@ -85,7 +85,7 @@ export default function PropertyCard({ property, index = 0 }) {
                 ? 'Nuitée'
                 : property.listingType === 'Location journalière'
                 ? 'Location journalière'
-                : 'Réalisation'}
+                : 'Réalisation en cours'}
             </span>
 
             <motion.button
