@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { BedDouble, Bath, Ruler, MapPin, Heart, Link2, Check } from 'lucide-react';
 import { useUserAuth } from '../../context/UserAuthContext';
-import { SITE_URL } from '../ui/SEO';
 
 const STATUS_STYLES = {
   disponible: 'bg-emerald-50 text-emerald-700',
