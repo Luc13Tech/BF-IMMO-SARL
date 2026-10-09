@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /mon-compte
+Disallow: /connexion
+Disallow: /inscription
+
+Sitemap: https://bfimmo-senegal.com/sitemap.xml
