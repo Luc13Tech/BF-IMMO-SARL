@@ -34,15 +34,18 @@ function getErrorMessage(err, fallback) {
  * apparaissent dans le message d'un visiteur, déclenchent la réponse
  * associée. Pas de clé API, pas de service externe — tout se joue ici.
  */
-function FaqCard({ item, onUpdate, onDelete }) {
+function FaqCard({ item, onUpdate, onDelete, onCreate }) {
   const [draft, setDraft] = useState({
     ...item,
     keywordsText: (item.keywords || []).join(', '),
   });
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleSave() {
+    if (saving || deleting) return;
+
     if (!draft.question?.trim()) {
       alert('Veuillez saisir une question.');
       return;
@@ -53,28 +56,39 @@ function FaqCard({ item, onUpdate, onDelete }) {
       return;
     }
 
+    const keywords = (draft.keywordsText || '')
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean);
+
+    if (keywords.length === 0) {
+      alert('Veuillez saisir au moins un mot-clé.');
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const keywords = draft.keywordsText
-        .split(',')
-        .map((keyword) => keyword.trim())
-        .filter(Boolean);
-
       const payload = {
         question: draft.question.trim(),
         answer: draft.answer.trim(),
-        category: draft.category,
-        active: draft.active,
+        category: draft.category || 'general',
+        active: Boolean(draft.active),
         keywords,
       };
 
-      const updated = await updateFaq(draft._id, payload);
+      if (item.isNew) {
+        // Création réelle uniquement après validation du formulaire.
+        await onCreate(draft._id, payload);
+      } else {
+        // Mise à jour d'une question déjà enregistrée.
+        const updated = await updateFaq(draft._id, payload);
 
-      onUpdate({
-        ...updated,
-        keywordsText: (updated.keywords || []).join(', '),
-      });
+        onUpdate({
+          ...updated,
+          keywordsText: (updated.keywords || []).join(', '),
+        });
+      }
 
       alert('Question enregistrée avec succès.');
     } catch (err) {
@@ -90,8 +104,19 @@ function FaqCard({ item, onUpdate, onDelete }) {
   }
 
   async function handleDelete() {
-    if (deleting) return;
-    await onDelete(draft._id, () => setDeleting(true), () => setDeleting(false));
+    if (deleting || saving) return;
+
+    // Une carte qui n'a pas encore été enregistrée est uniquement locale.
+    if (item.isNew) {
+      onDelete(item._id);
+      return;
+    }
+
+    await onDelete(
+      draft._id,
+      () => setDeleting(true),
+      () => setDeleting(false)
+    );
   }
 
   return (
@@ -104,7 +129,7 @@ function FaqCard({ item, onUpdate, onDelete }) {
     >
       <div className="flex items-center justify-between gap-3">
         <select
-          value={draft.category}
+          value={draft.category || 'general'}
           onChange={(e) =>
             setDraft({ ...draft, category: e.target.value })
           }
@@ -132,7 +157,7 @@ function FaqCard({ item, onUpdate, onDelete }) {
           <button
             type="button"
             onClick={handleDelete}
-            disabled={deleting}
+            disabled={deleting || saving}
             className="text-ink/30 hover:text-brand-red disabled:opacity-50"
             aria-label="Supprimer cette question"
           >
@@ -201,7 +226,6 @@ function FaqCard({ item, onUpdate, onDelete }) {
 export default function AIKnowledgeManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
 
@@ -213,7 +237,9 @@ export default function AIKnowledgeManager() {
       const data = await getAdminFaqs();
 
       if (!Array.isArray(data)) {
-        throw new Error('Le serveur a retourné une réponse inattendue.');
+        throw new Error(
+          'Le serveur a retourné une réponse inattendue.'
+        );
       }
 
       setItems(
@@ -238,45 +264,50 @@ export default function AIKnowledgeManager() {
     load();
   }, []);
 
-  async function handleAdd() {
-    if (adding) return;
+  function handleAdd() {
+    // Création d'une carte locale : aucun appel API à ce stade.
+    const temporaryId = `new-${Date.now()}`;
 
-    setAdding(true);
-
-    try {
-      const created = await createFaq({
-        question: 'Nouvelle question',
-        keywords: ['mot-cle'],
+    setItems((list) => [
+      {
+        _id: temporaryId,
+        question: '',
+        keywords: [],
+        keywordsText: '',
         answer: '',
         category: 'general',
         active: true,
-      });
+        isNew: true,
+      },
+      ...list,
+    ]);
 
-      if (!created?._id) {
-        throw new Error(
-          'Le serveur n’a pas confirmé la création de la question.'
-        );
-      }
+    setFilterCategory('');
+  }
 
-      setItems((list) => [
-        {
-          ...created,
-          keywordsText: (created.keywords || []).join(', '),
-        },
-        ...list,
-      ]);
+  async function handleCreate(temporaryId, payload) {
+    const created = await createFaq(payload);
 
-      setFilterCategory('');
-    } catch (err) {
-      alert(
-        getErrorMessage(
-          err,
-          "Impossible d'ajouter la question. Vérifiez votre connexion et vos droits d'administration."
-        )
+    if (!created?._id) {
+      throw new Error(
+        'Le serveur n’a pas confirmé la création de la question.'
       );
-    } finally {
-      setAdding(false);
     }
+
+    // Remplace la carte temporaire par la véritable entrée du serveur.
+    setItems((list) =>
+      list.map((entry) =>
+        entry._id === temporaryId
+          ? {
+              ...created,
+              keywordsText: (created.keywords || []).join(', '),
+              isNew: false,
+            }
+          : entry
+      )
+    );
+
+    return created;
   }
 
   function handleUpdate(updated) {
@@ -288,13 +319,26 @@ export default function AIKnowledgeManager() {
   }
 
   async function handleDelete(id, onStart, onFinish) {
-    if (!window.confirm('Supprimer cette entrée de la FAQ ?')) return;
+    // Suppression d'une carte temporaire : rien à supprimer sur le serveur.
+    if (String(id).startsWith('new-')) {
+      setItems((list) =>
+        list.filter((item) => item._id !== id)
+      );
+      return;
+    }
 
-    onStart();
+    if (!window.confirm('Supprimer cette entrée de la FAQ ?')) {
+      return;
+    }
+
+    onStart?.();
 
     try {
       await deleteFaq(id);
-      setItems((list) => list.filter((item) => item._id !== id));
+
+      setItems((list) =>
+        list.filter((item) => item._id !== id)
+      );
     } catch (err) {
       alert(
         getErrorMessage(
@@ -303,7 +347,7 @@ export default function AIKnowledgeManager() {
         )
       );
     } finally {
-      onFinish();
+      onFinish?.();
     }
   }
 
@@ -335,15 +379,10 @@ export default function AIKnowledgeManager() {
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
           onClick={handleAdd}
-          disabled={adding}
-          className="flex items-center gap-2 bg-ink text-white text-sm font-semibold px-5 py-3 rounded-full disabled:opacity-60"
+          className="flex items-center gap-2 bg-ink text-white text-sm font-semibold px-5 py-3 rounded-full"
         >
-          {adding ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Plus size={16} />
-          )}
-          {adding ? 'Ajout en cours…' : 'Ajouter une question'}
+          <Plus size={16} />
+          Ajouter une question
         </motion.button>
       </div>
 
@@ -403,6 +442,7 @@ export default function AIKnowledgeManager() {
                 item={item}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
+                onCreate={handleCreate}
               />
             ))}
           </AnimatePresence>
