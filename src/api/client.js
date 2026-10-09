@@ -9,9 +9,7 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('bfimmo_admin_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
@@ -19,84 +17,64 @@ api.interceptors.request.use((config) => {
 export const getServices = () => api.get('/services').then((r) => r.data.data);
 export const getService = (slug) => api.get(`/services/${slug}`).then((r) => r.data.data);
 
-export const getProperties = (params = {}) =>
-  api.get('/properties', { params }).then((r) => r.data.data);
-export const getProperty = (id) => api.get(`/properties/${id}`).then((r) => r.data.data);
+export const getProperties = (params = {}) => api.get('/properties', { params }).then((r) => r.data.data);
+// Accepte aussi bien un slug lisible (/biens/villa-4-pieces-abc12) qu'un
+// ancien ID Mongo — le backend gère les deux de façon transparente.
+export const getProperty = (idOrSlug) => api.get(`/properties/${idOrSlug}`).then((r) => r.data.data);
 
 export const getContent = () => api.get('/content').then((r) => r.data.data);
 
-export const submitLead = (service, payload) =>
-  api.post(`/leads/${service}`, payload).then((r) => r.data);
+export const submitLead = (service, payload) => api.post(`/leads/${service}`, payload).then((r) => r.data);
 
-export const getAIContext = () => api.get('/ai-assistant/context').then((r) => r.data.data);
+// ===== Assistant IA — FAQ par mots-clés (aucune clé API) =====
+export const getFaqs = () => api.get('/ai-assistant/faqs').then((r) => r.data.data);
 
 // ===== Admin =====
-export const login = (email, password) =>
-  api.post('/auth/login', { email, password }).then((r) => r.data);
+export const login = (email, password) => api.post('/auth/login', { email, password }).then((r) => r.data);
 export const adminLogout = () => api.post('/auth/logout').then((r) => r.data);
 export const getMe = () => api.get('/auth/me').then((r) => r.data.admin);
 
 export const getAllServicesAdmin = () => api.get('/services/admin/all').then((r) => r.data.data);
-export const updateService = (id, payload) =>
-  api.put(`/services/admin/${id}`, payload).then((r) => r.data.data);
-export const reorderServices = (order) =>
-  api.put('/services/admin/reorder/bulk', { order }).then((r) => r.data.data);
+export const updateService = (id, payload) => api.put(`/services/admin/${id}`, payload).then((r) => r.data.data);
+export const reorderServices = (order) => api.put('/services/admin/reorder/bulk', { order }).then((r) => r.data.data);
 
-export const getAllPropertiesAdmin = () =>
-  api.get('/properties/admin/all').then((r) => r.data.data);
-export const createProperty = (payload) =>
-  api.post('/properties', payload).then((r) => r.data.data);
-export const updateProperty = (id, payload) =>
-  api.put(`/properties/${id}`, payload).then((r) => r.data.data);
-export const deleteProperty = (id) =>
-  api.delete(`/properties/${id}`).then((r) => r.data);
+export const getAllPropertiesAdmin = () => api.get('/properties/admin/all').then((r) => r.data.data);
+export const createProperty = (payload) => api.post('/properties', payload).then((r) => r.data.data);
+export const updateProperty = (id, payload) => api.put(`/properties/${id}`, payload).then((r) => r.data.data);
+export const deleteProperty = (id) => api.delete(`/properties/${id}`).then((r) => r.data);
 
-export const getAllLeads = (params = {}) =>
-  api.get('/leads/admin/all', { params }).then((r) => r.data.data);
+export const getAllLeads = (params = {}) => api.get('/leads/admin/all', { params }).then((r) => r.data.data);
 export const getLead = (id) => api.get(`/leads/admin/${id}`).then((r) => r.data.data);
-export const updateLeadStatus = (id, status) =>
-  api.put(`/leads/admin/${id}/status`, { status }).then((r) => r.data.data);
+export const updateLeadStatus = (id, status) => api.put(`/leads/admin/${id}/status`, { status }).then((r) => r.data.data);
 export const deleteLead = (id) => api.delete(`/leads/admin/${id}`).then((r) => r.data);
 
 export const getAllContentAdmin = () => api.get('/content/admin/all').then((r) => r.data.data);
-export const updateContent = (key, payload) =>
-  api.put(`/content/admin/${key}`, payload).then((r) => r.data.data);
-export const bulkUpdateContent = (items) =>
-  api.put('/content/admin/bulk/update', { items }).then((r) => r.data.data);
+export const updateContent = (key, payload) => api.put(`/content/admin/${key}`, payload).then((r) => r.data.data);
+export const bulkUpdateContent = (items) => api.put('/content/admin/bulk/update', { items }).then((r) => r.data.data);
 
 export const uploadImage = (file, folder = 'misc') => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
-  return api
-    .post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    .then((r) => r.data.data);
+  return api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data.data);
 };
 
 export const uploadMultipleImages = (files, folder = 'misc') => {
   const formData = new FormData();
   Array.from(files).forEach((f) => formData.append('files', f));
   formData.append('folder', folder);
-  return api
-    .post('/upload/multiple', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    .then((r) => r.data.data);
+  return api.post('/upload/multiple', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data.data);
 };
 
-export const deleteImage = (publicId) =>
-  api.delete(`/upload/${encodeURIComponent(publicId)}`).then((r) => r.data);
+export const deleteImage = (publicId) => api.delete(`/upload/${encodeURIComponent(publicId)}`).then((r) => r.data);
 
-export const getAIKnowledgeAdmin = () =>
-  api.get('/ai-assistant/admin/knowledge').then((r) => r.data.data);
-export const createAIKnowledge = (payload) =>
-  api.post('/ai-assistant/admin/knowledge', payload).then((r) => r.data.data);
-export const updateAIKnowledge = (id, payload) =>
-  api.put(`/ai-assistant/admin/knowledge/${id}`, payload).then((r) => r.data.data);
-export const deleteAIKnowledge = (id) =>
-  api.delete(`/ai-assistant/admin/knowledge/${id}`).then((r) => r.data);
+// Base de connaissance de l'Assistant IA (admin)
+export const getAdminFaqs = () => api.get('/ai-assistant/admin/faqs').then((r) => r.data.data);
+export const createFaq = (payload) => api.post('/ai-assistant/admin/faqs', payload).then((r) => r.data.data);
+export const updateFaq = (id, payload) => api.put(`/ai-assistant/admin/faqs/${id}`, payload).then((r) => r.data.data);
+export const deleteFaq = (id) => api.delete(`/ai-assistant/admin/faqs/${id}`).then((r) => r.data);
 
-// ===== Journal d'audit (superadmin uniquement) =====
-export const getAuditLogs = (params = {}) =>
-  api.get('/admin-audit', { params }).then((r) => r.data);
+export const getAuditLogs = (params = {}) => api.get('/admin-audit', { params }).then((r) => r.data);
 
 // ===== Comptes utilisateurs publics =====
 export const userApi = axios.create({
@@ -106,17 +84,12 @@ export const userApi = axios.create({
 
 userApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('bfimmo_user_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-export const registerUser = (payload) =>
-  userApi.post('/users/register', payload).then((r) => r.data);
-export const loginUser = (email, password) =>
-  userApi.post('/users/login', { email, password }).then((r) => r.data);
+export const registerUser = (payload) => userApi.post('/users/register', payload).then((r) => r.data);
+export const loginUser = (email, password) => userApi.post('/users/login', { email, password }).then((r) => r.data);
 export const getUserMe = () => userApi.get('/users/me').then((r) => r.data.user);
 export const getUserFavorites = () => userApi.get('/users/favorites').then((r) => r.data.data);
-export const toggleUserFavorite = (propertyId) =>
-  userApi.put(`/users/favorites/${propertyId}`).then((r) => r.data);
+export const toggleUserFavorite = (propertyId) => userApi.put(`/users/favorites/${propertyId}`).then((r) => r.data);
