@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Plus, Trash2, Save, Bot, Tag } from 'lucide-react';
 import {
@@ -21,20 +22,40 @@ const CATEGORIES = [
 ];
 
 function getErrorMessage(err, fallback) {
+  const responseData = err?.response?.data;
+  const validationErrors = responseData?.errors;
+
+  // Affiche les erreurs précises renvoyées par le backend.
+  if (Array.isArray(validationErrors) && validationErrors.length > 0) {
+    const details = validationErrors
+      .map((error) =>
+        typeof error === 'string' ? error : error?.message
+      )
+      .filter(Boolean);
+
+    if (details.length > 0) {
+      return [
+        responseData?.message || fallback,
+        ...details,
+      ].join('\n');
+    }
+  }
+
   return (
-    err?.response?.data?.message ||
-    err?.response?.data?.error ||
+    responseData?.message ||
+    responseData?.error ||
     err?.message ||
     fallback
   );
 }
 
 /**
- * Chaque entrée = une question type + une liste de mots-clés qui, lorsqu'ils
- * apparaissent dans le message d'un visiteur, déclenchent la réponse
- * associée. Pas de clé API, pas de service externe — tout se joue ici.
+ * Chaque entrée = une question type + une liste de mots-clés.
+ * Aucune clé API ni aucun service externe.
  */
 function FaqCard({ item, onUpdate, onDelete, onCreate }) {
+  const cardRef = useRef(null);
+
   const [draft, setDraft] = useState({
     ...item,
     keywordsText: (item.keywords || []).join(', '),
@@ -42,6 +63,16 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Affiche automatiquement la nouvelle carte à l'écran.
+  useEffect(() => {
+    if (item.isNew) {
+      cardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [item.isNew]);
 
   async function handleSave() {
     if (saving || deleting) return;
@@ -66,22 +97,23 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
       return;
     }
 
+    const payload = {
+      question: draft.question.trim(),
+      answer: draft.answer.trim(),
+      category: CATEGORIES.includes(draft.category)
+        ? draft.category
+        : 'general',
+      active: Boolean(draft.active),
+      keywords,
+    };
+
     setSaving(true);
 
     try {
-      const payload = {
-        question: draft.question.trim(),
-        answer: draft.answer.trim(),
-        category: draft.category || 'general',
-        active: Boolean(draft.active),
-        keywords,
-      };
-
       if (item.isNew) {
-        // Création réelle uniquement après validation du formulaire.
-        await onCreate(draft._id, payload);
+        // L'appel API se fait uniquement lors de l'enregistrement.
+        await onCreate(item._id, payload);
       } else {
-        // Mise à jour d'une question déjà enregistrée.
         const updated = await updateFaq(draft._id, payload);
 
         onUpdate({
@@ -106,7 +138,7 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
   async function handleDelete() {
     if (deleting || saving) return;
 
-    // Une carte qui n'a pas encore été enregistrée est uniquement locale.
+    // Une nouvelle carte n'existe pas encore dans la base.
     if (item.isNew) {
       onDelete(item._id);
       return;
@@ -121,19 +153,33 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
-      className="bg-white rounded-[20px] p-6 shadow-soft space-y-3"
+      className={`bg-white rounded-[20px] p-6 shadow-soft space-y-3 ${
+        item.isNew ? 'ring-2 ring-brand-gold' : ''
+      }`}
     >
+      {item.isNew && (
+        <p className="text-sm font-semibold text-ink">
+          Nouvelle question — remplissez les champs puis cliquez sur
+          « Enregistrer ».
+        </p>
+      )}
+
       <div className="flex items-center justify-between gap-3">
         <select
           value={draft.category || 'general'}
           onChange={(e) =>
-            setDraft({ ...draft, category: e.target.value })
+            setDraft((previous) => ({
+              ...previous,
+              category: e.target.value,
+            }))
           }
           className="text-xs font-mono uppercase px-2.5 py-1 rounded-full border border-line outline-none"
+          aria-label="Catégorie de la question"
         >
           {CATEGORIES.map((category) => (
             <option key={category} value={category}>
@@ -148,7 +194,10 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
               type="checkbox"
               checked={Boolean(draft.active)}
               onChange={(e) =>
-                setDraft({ ...draft, active: e.target.checked })
+                setDraft((previous) => ({
+                  ...previous,
+                  active: e.target.checked,
+                }))
               }
             />
             Active
@@ -173,10 +222,14 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
       <input
         value={draft.question || ''}
         onChange={(e) =>
-          setDraft({ ...draft, question: e.target.value })
+          setDraft((previous) => ({
+            ...previous,
+            question: e.target.value,
+          }))
         }
         placeholder="Question type (ex : Comment louer un bien ?)"
         className="w-full px-4 py-2.5 rounded-xl border border-line text-sm font-semibold outline-none focus:border-brand-gold"
+        aria-label="Question"
       />
 
       <div>
@@ -188,21 +241,29 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
         <input
           value={draft.keywordsText || ''}
           onChange={(e) =>
-            setDraft({ ...draft, keywordsText: e.target.value })
+            setDraft((previous) => ({
+              ...previous,
+              keywordsText: e.target.value,
+            }))
           }
           placeholder="louer, location appartement, trouver location"
           className="w-full px-4 py-2.5 rounded-xl border border-line text-sm outline-none focus:border-brand-gold font-mono"
+          aria-label="Mots-clés"
         />
       </div>
 
       <textarea
         value={draft.answer || ''}
         onChange={(e) =>
-          setDraft({ ...draft, answer: e.target.value })
+          setDraft((previous) => ({
+            ...previous,
+            answer: e.target.value,
+          }))
         }
         placeholder="Réponse que l'Assistant donnera au visiteur…"
         rows={3}
         className="w-full px-4 py-2.5 rounded-xl border border-line text-sm outline-none focus:border-brand-gold"
+        aria-label="Réponse"
       />
 
       <motion.button
@@ -217,7 +278,7 @@ function FaqCard({ item, onUpdate, onDelete, onCreate }) {
         ) : (
           <Save size={14} />
         )}
-        Enregistrer
+        {saving ? 'Enregistrement...' : 'Enregistrer'}
       </motion.button>
     </motion.div>
   );
@@ -246,6 +307,7 @@ export default function AIKnowledgeManager() {
         data.map((item) => ({
           ...item,
           keywordsText: (item.keywords || []).join(', '),
+          isNew: false,
         }))
       );
     } catch (err) {
@@ -265,8 +327,12 @@ export default function AIKnowledgeManager() {
   }, []);
 
   function handleAdd() {
-    // Création d'une carte locale : aucun appel API à ce stade.
-    const temporaryId = `new-${Date.now()}`;
+    // Aucun appel API et aucune écriture dans MongoDB à cette étape.
+    const temporaryId = `new-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    setFilterCategory('');
 
     setItems((list) => [
       {
@@ -281,8 +347,6 @@ export default function AIKnowledgeManager() {
       },
       ...list,
     ]);
-
-    setFilterCategory('');
   }
 
   async function handleCreate(temporaryId, payload) {
@@ -294,7 +358,7 @@ export default function AIKnowledgeManager() {
       );
     }
 
-    // Remplace la carte temporaire par la véritable entrée du serveur.
+    // La carte temporaire devient l'entrée réellement enregistrée.
     setItems((list) =>
       list.map((entry) =>
         entry._id === temporaryId
@@ -319,7 +383,7 @@ export default function AIKnowledgeManager() {
   }
 
   async function handleDelete(id, onStart, onFinish) {
-    // Suppression d'une carte temporaire : rien à supprimer sur le serveur.
+    // Suppression locale uniquement pour une carte non enregistrée.
     if (String(id).startsWith('new-')) {
       setItems((list) =>
         list.filter((item) => item._id !== id)
@@ -351,8 +415,11 @@ export default function AIKnowledgeManager() {
     }
   }
 
+  // Une carte nouvelle reste visible même si un filtre est appliqué.
   const filtered = filterCategory
-    ? items.filter((item) => item.category === filterCategory)
+    ? items.filter(
+        (item) => item.isNew || item.category === filterCategory
+      )
     : items;
 
   return (
@@ -369,7 +436,8 @@ export default function AIKnowledgeManager() {
             </h1>
 
             <p className="text-ink/55 font-light text-sm mt-1">
-              {items.length} question(s) type — répond par mots-clés, sans clé API ni service externe.
+              {items.length} question(s) type — répond par mots-clés,
+              sans clé API ni service externe.
             </p>
           </div>
         </div>
