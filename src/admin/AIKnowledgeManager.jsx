@@ -1,9 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Plus, Trash2, Save, Bot, Tag } from 'lucide-react';
-import { getAdminFaqs, createFaq, updateFaq, deleteFaq } from '../api/client';
+import {
+  getAdminFaqs,
+  createFaq,
+  updateFaq,
+  deleteFaq,
+} from '../api/client';
 
-const CATEGORIES = ['general', 'achat', 'location', 'gerance', 'vente', 'conseils', 'btp', 'suivi-chantier', 'contact'];
+const CATEGORIES = [
+  'general',
+  'achat',
+  'location',
+  'gerance',
+  'vente',
+  'conseils',
+  'btp',
+  'suivi-chantier',
+  'contact',
+];
+
+function getErrorMessage(err, fallback) {
+  return (
+    err?.response?.data?.message ||
+    err?.response?.data?.error ||
+    err?.message ||
+    fallback
+  );
+}
 
 /**
  * Chaque entrée = une question type + une liste de mots-clés qui, lorsqu'ils
@@ -11,67 +35,163 @@ const CATEGORIES = ['general', 'achat', 'location', 'gerance', 'vente', 'conseil
  * associée. Pas de clé API, pas de service externe — tout se joue ici.
  */
 function FaqCard({ item, onUpdate, onDelete }) {
-  const [draft, setDraft] = useState({ ...item, keywordsText: (item.keywords || []).join(', ') });
+  const [draft, setDraft] = useState({
+    ...item,
+    keywordsText: (item.keywords || []).join(', '),
+  });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleSave() {
+    if (!draft.question?.trim()) {
+      alert('Veuillez saisir une question.');
+      return;
+    }
+
+    if (!draft.answer?.trim()) {
+      alert('Veuillez saisir une réponse.');
+      return;
+    }
+
     setSaving(true);
+
     try {
-      const keywords = draft.keywordsText.split(',').map((k) => k.trim()).filter(Boolean);
-      const payload = { question: draft.question, answer: draft.answer, category: draft.category, active: draft.active, keywords };
+      const keywords = draft.keywordsText
+        .split(',')
+        .map((keyword) => keyword.trim())
+        .filter(Boolean);
+
+      const payload = {
+        question: draft.question.trim(),
+        answer: draft.answer.trim(),
+        category: draft.category,
+        active: draft.active,
+        keywords,
+      };
+
       const updated = await updateFaq(draft._id, payload);
-      onUpdate({ ...updated, keywordsText: (updated.keywords || []).join(', ') });
+
+      onUpdate({
+        ...updated,
+        keywordsText: (updated.keywords || []).join(', '),
+      });
+
+      alert('Question enregistrée avec succès.');
     } catch (err) {
-      alert(err?.response?.data?.message || "Erreur lors de l'enregistrement.");
+      alert(
+        getErrorMessage(
+          err,
+          "Erreur lors de l'enregistrement."
+        )
+      );
     } finally {
       setSaving(false);
     }
   }
 
+  async function handleDelete() {
+    if (deleting) return;
+    await onDelete(draft._id, () => setDeleting(true), () => setDeleting(false));
+  }
+
   return (
-    <motion.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="bg-white rounded-[20px] p-6 shadow-soft space-y-3">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, height: 0 }}
+      className="bg-white rounded-[20px] p-6 shadow-soft space-y-3"
+    >
       <div className="flex items-center justify-between gap-3">
-        <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="text-xs font-mono uppercase px-2.5 py-1 rounded-full border border-line outline-none">
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        <select
+          value={draft.category}
+          onChange={(e) =>
+            setDraft({ ...draft, category: e.target.value })
+          }
+          className="text-xs font-mono uppercase px-2.5 py-1 rounded-full border border-line outline-none"
+        >
+          {CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
+
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-1.5 text-xs text-ink/50">
-            <input type="checkbox" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
+            <input
+              type="checkbox"
+              checked={Boolean(draft.active)}
+              onChange={(e) =>
+                setDraft({ ...draft, active: e.target.checked })
+              }
+            />
             Active
           </label>
-          <button onClick={() => onDelete(draft._id)} className="text-ink/30 hover:text-brand-red"><Trash2 size={15} /></button>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-ink/30 hover:text-brand-red disabled:opacity-50"
+            aria-label="Supprimer cette question"
+          >
+            {deleting ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <Trash2 size={15} />
+            )}
+          </button>
         </div>
       </div>
 
       <input
-        value={draft.question}
-        onChange={(e) => setDraft({ ...draft, question: e.target.value })}
+        value={draft.question || ''}
+        onChange={(e) =>
+          setDraft({ ...draft, question: e.target.value })
+        }
         placeholder="Question type (ex : Comment louer un bien ?)"
         className="w-full px-4 py-2.5 rounded-xl border border-line text-sm font-semibold outline-none focus:border-brand-gold"
       />
 
       <div>
         <label className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wide text-ink/40 mb-1.5">
-          <Tag size={11} /> Mots-clés déclencheurs (séparés par des virgules)
+          <Tag size={11} />
+          Mots-clés déclencheurs (séparés par des virgules)
         </label>
+
         <input
-          value={draft.keywordsText}
-          onChange={(e) => setDraft({ ...draft, keywordsText: e.target.value })}
+          value={draft.keywordsText || ''}
+          onChange={(e) =>
+            setDraft({ ...draft, keywordsText: e.target.value })
+          }
           placeholder="louer, location appartement, trouver location"
           className="w-full px-4 py-2.5 rounded-xl border border-line text-sm outline-none focus:border-brand-gold font-mono"
         />
       </div>
 
       <textarea
-        value={draft.answer}
-        onChange={(e) => setDraft({ ...draft, answer: e.target.value })}
+        value={draft.answer || ''}
+        onChange={(e) =>
+          setDraft({ ...draft, answer: e.target.value })
+        }
         placeholder="Réponse que l'Assistant donnera au visiteur…"
         rows={3}
         className="w-full px-4 py-2.5 rounded-xl border border-line text-sm outline-none focus:border-brand-gold"
       />
 
-      <motion.button onClick={handleSave} disabled={saving} whileTap={{ scale: 0.97 }} className="flex items-center gap-2 text-sm font-semibold text-ink">
-        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+      <motion.button
+        type="button"
+        onClick={handleSave}
+        disabled={saving || deleting}
+        whileTap={{ scale: 0.97 }}
+        className="flex items-center gap-2 text-sm font-semibold text-ink disabled:opacity-50"
+      >
+        {saving ? (
+          <Loader2 size={14} className="animate-spin" />
+        ) : (
+          <Save size={14} />
+        )}
         Enregistrer
       </motion.button>
     </motion.div>
@@ -81,74 +201,209 @@ function FaqCard({ item, onUpdate, onDelete }) {
 export default function AIKnowledgeManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
 
-  function load() {
+  async function load() {
     setLoading(true);
-    getAdminFaqs()
-      .then((data) => setItems(data.map((d) => ({ ...d, keywordsText: (d.keywords || []).join(', ') }))))
-      .finally(() => setLoading(false));
+    setLoadError('');
+
+    try {
+      const data = await getAdminFaqs();
+
+      if (!Array.isArray(data)) {
+        throw new Error('Le serveur a retourné une réponse inattendue.');
+      }
+
+      setItems(
+        data.map((item) => ({
+          ...item,
+          keywordsText: (item.keywords || []).join(', '),
+        }))
+      );
+    } catch (err) {
+      setLoadError(
+        getErrorMessage(
+          err,
+          'Impossible de charger les questions.'
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(load, []);
+
+  useEffect(() => {
+    load();
+  }, []);
 
   async function handleAdd() {
-    const created = await createFaq({
-      question: 'Nouvelle question',
-      keywords: ['mot-cle'],
-      answer: '',
-      category: 'general',
-      active: true,
-    });
-    setItems((list) => [{ ...created, keywordsText: (created.keywords || []).join(', ') }, ...list]);
+    if (adding) return;
+
+    setAdding(true);
+
+    try {
+      const created = await createFaq({
+        question: 'Nouvelle question',
+        keywords: ['mot-cle'],
+        answer: '',
+        category: 'general',
+        active: true,
+      });
+
+      if (!created?._id) {
+        throw new Error(
+          'Le serveur n’a pas confirmé la création de la question.'
+        );
+      }
+
+      setItems((list) => [
+        {
+          ...created,
+          keywordsText: (created.keywords || []).join(', '),
+        },
+        ...list,
+      ]);
+
+      setFilterCategory('');
+    } catch (err) {
+      alert(
+        getErrorMessage(
+          err,
+          "Impossible d'ajouter la question. Vérifiez votre connexion et vos droits d'administration."
+        )
+      );
+    } finally {
+      setAdding(false);
+    }
   }
 
   function handleUpdate(updated) {
-    setItems((list) => list.map((i) => (i._id === updated._id ? updated : i)));
+    setItems((list) =>
+      list.map((item) =>
+        item._id === updated._id ? updated : item
+      )
+    );
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Supprimer cette entrée de la FAQ ?')) return;
-    await deleteFaq(id);
-    setItems((list) => list.filter((i) => i._id !== id));
+  async function handleDelete(id, onStart, onFinish) {
+    if (!window.confirm('Supprimer cette entrée de la FAQ ?')) return;
+
+    onStart();
+
+    try {
+      await deleteFaq(id);
+      setItems((list) => list.filter((item) => item._id !== id));
+    } catch (err) {
+      alert(
+        getErrorMessage(
+          err,
+          'Erreur lors de la suppression.'
+        )
+      );
+    } finally {
+      onFinish();
+    }
   }
 
-  const filtered = filterCategory ? items.filter((i) => i.category === filterCategory) : items;
+  const filtered = filterCategory
+    ? items.filter((item) => item.category === filterCategory)
+    : items;
 
   return (
     <div>
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <span className="w-11 h-11 rounded-full bg-ink flex items-center justify-center"><Bot size={18} className="text-brand-red" /></span>
+          <span className="w-11 h-11 rounded-full bg-ink flex items-center justify-center">
+            <Bot size={18} className="text-brand-red" />
+          </span>
+
           <div>
-            <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-ink">Assistant Virtuel</h1>
+            <h1 className="font-sans font-extrabold text-2xl sm:text-3xl text-ink">
+              Assistant Virtuel
+            </h1>
+
             <p className="text-ink/55 font-light text-sm mt-1">
               {items.length} question(s) type — répond par mots-clés, sans clé API ni service externe.
             </p>
           </div>
         </div>
-        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={handleAdd} className="flex items-center gap-2 bg-ink text-white text-sm font-semibold px-5 py-3 rounded-full">
-          <Plus size={16} /> Ajouter une question
+
+        <motion.button
+          type="button"
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleAdd}
+          disabled={adding}
+          className="flex items-center gap-2 bg-ink text-white text-sm font-semibold px-5 py-3 rounded-full disabled:opacity-60"
+        >
+          {adding ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Plus size={16} />
+          )}
+          {adding ? 'Ajout en cours…' : 'Ajouter une question'}
         </motion.button>
       </div>
 
       <div className="flex gap-2 mt-6 flex-wrap">
-        <button onClick={() => setFilterCategory('')} className={`px-3 py-1.5 rounded-full text-xs font-mono uppercase border ${!filterCategory ? 'bg-ink text-white border-ink' : 'border-line text-ink/50'}`}>
+        <button
+          type="button"
+          onClick={() => setFilterCategory('')}
+          className={`px-3 py-1.5 rounded-full text-xs font-mono uppercase border ${
+            !filterCategory
+              ? 'bg-ink text-white border-ink'
+              : 'border-line text-ink/50'
+          }`}
+        >
           Toutes
         </button>
-        {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setFilterCategory(c)} className={`px-3 py-1.5 rounded-full text-xs font-mono uppercase border ${filterCategory === c ? 'bg-ink text-white border-ink' : 'border-line text-ink/50'}`}>
-            {c}
+
+        {CATEGORIES.map((category) => (
+          <button
+            type="button"
+            key={category}
+            onClick={() => setFilterCategory(category)}
+            className={`px-3 py-1.5 rounded-full text-xs font-mono uppercase border ${
+              filterCategory === category
+                ? 'bg-ink text-white border-ink'
+                : 'border-line text-ink/50'
+            }`}
+          >
+            {category}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="py-16 flex justify-center"><Loader2 className="animate-spin text-brand-gold" size={26} /></div>
+        <div className="py-16 flex justify-center">
+          <Loader2
+            className="animate-spin text-brand-gold"
+            size={26}
+          />
+        </div>
+      ) : loadError ? (
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <p>{loadError}</p>
+          <button
+            type="button"
+            onClick={load}
+            className="mt-3 underline font-semibold"
+          >
+            Réessayer
+          </button>
+        </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-5 mt-6">
           <AnimatePresence>
             {filtered.map((item) => (
-              <FaqCard key={item._id} item={item} onUpdate={handleUpdate} onDelete={handleDelete} />
+              <FaqCard
+                key={item._id}
+                item={item}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+              />
             ))}
           </AnimatePresence>
         </div>
