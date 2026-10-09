@@ -1,40 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, Loader2, SearchX } from 'lucide-react';
+import { SlidersHorizontal, SearchX } from 'lucide-react';
 import { getProperties } from '../api/client';
+import { useCachedData } from '../hooks/useCachedData';
+import { PropertiesGridSkeleton } from '../components/ui/Skeleton';
 import PropertyCard from '../components/properties/PropertyCard';
+import SEO from '../components/ui/SEO';
 
 const TYPES = [
   { value: '', label: 'Tous types' },
   { value: 'villa', label: 'Villa' },
   { value: 'appartement', label: 'Appartement' },
+  { value: 'maison', label: 'Maison' },
+  { value: 'chambre', label: 'Chambre' },
+  { value: 'hotel', label: 'Hôtel' },
   { value: 'terrain', label: 'Terrain' },
   { value: 'bureau', label: 'Bureau' },
   { value: 'commerce', label: 'Commerce' },
 ];
 
+// Les 4 modes de location demandés, en plus de "tous"
 const LISTING = [
-  { value: '', label: 'Achat & Location' },
+  { value: '', label: 'Tous les biens' },
   { value: 'vente', label: 'À vendre' },
   { value: 'location', label: 'À louer' },
+  { value: 'location_nuitee', label: 'Par nuitée' },
+  { value: 'location_journaliere', label: 'À la journée' },
 ];
 
 export default function Properties() {
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ listingType: '', type: '', q: '' });
 
-  useEffect(() => {
-    setLoading(true);
-    const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
-    getProperties(params)
-      .then(setProperties)
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [filters]);
+  // Mise en cache par combinaison de filtres : revenir sur la page avec les
+  // mêmes filtres affiche instantanément les derniers résultats connus,
+  // pendant que la liste se rafraîchit discrètement en arrière-plan.
+  const cacheKey = `properties_${JSON.stringify(filters)}`;
+  const { data: properties, loading } = useCachedData(
+    cacheKey,
+    () => {
+      const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
+      return getProperties(params);
+    },
+    [cacheKey]
+  );
+
+  const list = properties || [];
 
   return (
     <div>
+      <SEO
+        title="Nos biens immobiliers à Dakar"
+        description="Villas, appartements, maisons, chambres, terrains, bureaux et commerces à vendre, à louer, par nuitée ou à la journée avec BF IMMO SARL à Dakar."
+        path="/biens"
+      />
+
       <section className="relative bg-ink pt-32 pb-20 overflow-hidden">
         <motion.div
           aria-hidden
@@ -43,26 +62,16 @@ export default function Properties() {
           transition={{ duration: 17, repeat: Infinity, ease: 'easeInOut' }}
         />
         <div className="container-bf relative z-10">
-          <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-brand-goldSoft">
-            Nos biens
-          </span>
-          <h1 className="font-sans font-extrabold text-white text-4xl sm:text-5xl mt-4 max-w-xl">
-            Trouvez le bien qui vous correspond
-          </h1>
+          <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-brand-goldSoft">Nos biens</span>
+          <h1 className="font-sans font-extrabold text-white text-4xl sm:text-5xl mt-4 max-w-xl">Trouvez le bien qui vous correspond</h1>
         </div>
-        <svg
-          className="absolute bottom-0 left-0 w-full text-offwhite"
-          style={{ transform: 'translateY(1px)' }}
-          viewBox="0 0 1440 90"
-          preserveAspectRatio="none"
-        >
+        <svg className="absolute bottom-0 left-0 w-full text-offwhite" style={{ transform: 'translateY(1px)' }} viewBox="0 0 1440 90" preserveAspectRatio="none">
           <path d="M0,45 C 300,90 600,0 900,35 C 1200,70 1320,20 1440,40 L1440,90 L0,90 Z" fill="currentColor" />
         </svg>
       </section>
 
       <section className="bg-offwhite pb-28">
         <div className="container-bf">
-          {/* Filtres */}
           <motion.div
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -73,28 +82,12 @@ export default function Properties() {
               <span className="text-[12px] font-mono uppercase tracking-wide">Filtrer</span>
             </div>
 
-            <select
-              value={filters.listingType}
-              onChange={(e) => setFilters((f) => ({ ...f, listingType: e.target.value }))}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-line bg-offwhite text-sm focus:border-brand-gold outline-none"
-            >
-              {LISTING.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
+            <select value={filters.listingType} onChange={(e) => setFilters((f) => ({ ...f, listingType: e.target.value }))} className="flex-1 px-4 py-2.5 rounded-xl border border-line bg-offwhite text-sm focus:border-brand-gold outline-none">
+              {LISTING.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-line bg-offwhite text-sm focus:border-brand-gold outline-none"
-            >
-              {TYPES.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
+            <select value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))} className="flex-1 px-4 py-2.5 rounded-xl border border-line bg-offwhite text-sm focus:border-brand-gold outline-none">
+              {TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
             <input
@@ -106,24 +99,17 @@ export default function Properties() {
             />
           </motion.div>
 
-          {loading ? (
-            <div className="py-20 flex justify-center">
-              <Loader2 className="animate-spin text-brand-gold" size={26} />
-            </div>
-          ) : properties.length === 0 ? (
+          {loading && list.length === 0 ? (
+            <PropertiesGridSkeleton />
+          ) : list.length === 0 ? (
             <div className="py-20 flex flex-col items-center text-center text-ink/50">
               <SearchX size={30} className="mb-3" />
               <p className="font-medium">Aucun bien ne correspond à ces critères.</p>
             </div>
           ) : (
             <AnimatePresence mode="wait">
-              <motion.div
-                key={JSON.stringify(filters)}
-                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {properties.map((p, i) => (
-                  <PropertyCard key={p._id} property={p} index={i} />
-                ))}
+              <motion.div key={cacheKey} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {list.map((p, i) => <PropertyCard key={p._id} property={p} index={i} />)}
               </motion.div>
             </AnimatePresence>
           )}
