@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -30,7 +31,11 @@ export default defineConfig({
         // sur index.html pour que React Router prenne le relais, au lieu
         // que le Service Worker ne renvoie une erreur.
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/sitemap\.xml$/,
+          /^\/robots\.txt$/,
+        ],
 
         // Nettoyage des anciens caches
         cleanupOutdatedCaches: true,
