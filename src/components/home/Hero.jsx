@@ -9,12 +9,41 @@ const roofDraw = {
   visible: (i = 1) => ({
     pathLength: 1,
     opacity: 1,
-    transition: { pathLength: { delay: i * 0.3, duration: 1.4, ease: [0.65, 0, 0.35, 1] }, opacity: { delay: i * 0.3, duration: 0.3 } },
+    transition: {
+      pathLength: {
+        delay: i * 0.3,
+        duration: 1.4,
+        ease: [0.65, 0, 0.35, 1],
+      },
+      opacity: { delay: i * 0.3, duration: 0.3 },
+    },
   }),
 };
 
+function formatPrice(price) {
+  if (
+    price === null ||
+    price === undefined ||
+    (typeof price === 'string' && price.trim() === '')
+  ) {
+    return null;
+  }
+
+  const numericPrice = Number(price);
+
+  if (!Number.isFinite(numericPrice) || numericPrice < 0) {
+    return null;
+  }
+
+  return numericPrice.toLocaleString('fr-FR');
+}
+
 export default function Hero({ title, subtitle, featuredProperty }) {
   const firstLine = title?.split(',')[0] || 'Votre bien';
+
+  const featuredPrice = featuredProperty
+    ? formatPrice(featuredProperty.price)
+    : null;
 
   return (
     <section className="relative bg-ink overflow-hidden pt-36 pb-40 md:pt-44 md:pb-56">
@@ -24,6 +53,7 @@ export default function Hero({ title, subtitle, featuredProperty }) {
         animate={{ rotate: [0, 25, 0], scale: [1, 1.08, 1] }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
       />
+
       <motion.div
         aria-hidden
         className="absolute bottom-0 -left-24 w-[420px] h-[420px] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-brand-red/10 blur-3xl"
@@ -44,12 +74,30 @@ export default function Hero({ title, subtitle, featuredProperty }) {
           </motion.div>
 
           <h1 className="font-sans font-extrabold text-white text-[2.6rem] leading-[1.08] sm:text-6xl lg:text-[3.6rem]">
-            <motion.span initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15 }} className="block">
+            <motion.span
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.15 }}
+              className="block"
+            >
               {firstLine},
             </motion.span>
-            <motion.span initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="relative inline-block mt-1">
-              <span className="text-white">BF</span> <span className="text-brand-red">IMMO</span> <span className="text-brand-gold">- Sénégal</span>
-              <svg className="absolute left-0 -bottom-2 w-full h-3" viewBox="0 0 300 12" preserveAspectRatio="none">
+
+            <motion.span
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="relative inline-block mt-1"
+            >
+              <span className="text-white">BF</span>{' '}
+              <span className="text-brand-red">IMMO</span>{' '}
+              <span className="text-brand-gold">- Sénégal</span>
+
+              <svg
+                className="absolute left-0 -bottom-2 w-full h-3"
+                viewBox="0 0 300 12"
+                preserveAspectRatio="none"
+              >
                 <motion.path
                   d="M2 8 Q 80 -2 150 6 T 298 4"
                   stroke="#B8923A"
@@ -58,39 +106,96 @@ export default function Hero({ title, subtitle, featuredProperty }) {
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
-                  transition={{ delay: 1, duration: 0.9, ease: 'easeInOut' }}
+                  transition={{
+                    delay: 1,
+                    duration: 0.9,
+                    ease: 'easeInOut',
+                  }}
                 />
               </svg>
             </motion.span>
           </h1>
 
-          <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.5 }} className="mt-7 text-white/65 font-light text-[15.5px] leading-relaxed max-w-md">
-            {subtitle || "Achat, location, gérance, vente, conseils, construction BTP et suivi de chantier — un seul interlocuteur, du plan au bien livré."}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+            className="mt-7 text-white/65 font-light text-[15.5px] leading-relaxed max-w-md"
+          >
+            {subtitle ||
+              "Achat, location, gérance, vente, conseils, construction BTP et suivi de chantier — un seul interlocuteur, du plan au bien livré."}
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.65 }} className="mt-10 flex flex-wrap gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.65 }}
+            className="mt-10 flex flex-wrap gap-4"
+          >
             <Button as="a" href="#services" variant="primary">
               Explorer nos services <ArrowRight size={16} />
             </Button>
-            <Button as="a" href="/biens" variant="ghost" className="!text-white !border !border-white/25 !bg-white/5 backdrop-blur-sm">
+
+            <Button
+              as="a"
+              href="/biens"
+              variant="ghost"
+              className="!text-white !border !border-white/25 !bg-white/5 backdrop-blur-sm"
+            >
               Voir les biens
             </Button>
           </motion.div>
         </div>
 
         <div className="relative h-[360px] sm:h-[420px]">
-          <motion.svg viewBox="0 0 300 170" className="absolute inset-0 w-full h-full" fill="none">
-            <motion.path d="M20 150 L150 40 L280 150" stroke="#D8BD7E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" custom={0} variants={roofDraw} initial="hidden" animate="visible" />
-            <motion.path d="M60 150 L150 70 L240 150" stroke="#E2231A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" custom={1} variants={roofDraw} initial="hidden" animate="visible" />
+          <motion.svg
+            viewBox="0 0 300 170"
+            className="absolute inset-0 w-full h-full"
+            fill="none"
+          >
+            <motion.path
+              d="M20 150 L150 40 L280 150"
+              stroke="#D8BD7E"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              custom={0}
+              variants={roofDraw}
+              initial="hidden"
+              animate="visible"
+            />
+
+            <motion.path
+              d="M60 150 L150 70 L240 150"
+              stroke="#E2231A"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              custom={1}
+              variants={roofDraw}
+              initial="hidden"
+              animate="visible"
+            />
           </motion.svg>
 
           <motion.div
             initial={{ opacity: 0, y: 40, rotate: -3 }}
             animate={{ opacity: 1, y: 0, rotate: -2 }}
-            transition={{ delay: 1.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              delay: 1.1,
+              duration: 0.8,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="absolute right-2 bottom-4 sm:bottom-10 w-64 sm:w-72"
           >
-            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            >
               {featuredProperty ? (
                 // Toute la fiche devient cliquable, exactement comme une carte
                 // de "Nos biens" : clic -> page détail de ce bien précis.
@@ -100,25 +205,50 @@ export default function Hero({ title, subtitle, featuredProperty }) {
                 >
                   <div className="h-32 bg-gradient-to-br from-ink-soft to-ink relative overflow-hidden">
                     {featuredProperty.images?.[0]?.url && (
-                      <img src={featuredProperty.images[0].url} alt={featuredProperty.title} className="w-full h-full object-cover" />
+                      <img
+                        src={featuredProperty.images[0].url}
+                        alt={featuredProperty.title}
+                        className="w-full h-full object-cover"
+                      />
                     )}
+
                     <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white text-[10px] font-mono uppercase tracking-wide text-emerald-700">
-                      {featuredProperty.status === 'nouveau' ? 'Nouveau' : 'Disponible'}
+                      {featuredProperty.status === 'nouveau'
+                        ? 'Nouveau'
+                        : 'Disponible'}
                     </span>
                   </div>
+
                   <div className="p-5">
-                    <p className="font-sans font-bold text-ink text-[15px]">{featuredProperty.title}</p>
-                    <p className="font-mono text-[10.5px] text-ink/50 mt-1">{featuredProperty.location}</p>
+                    <p className="font-sans font-bold text-ink text-[15px]">
+                      {featuredProperty.title}
+                    </p>
+
+                    <p className="font-mono text-[10.5px] text-ink/50 mt-1">
+                      {featuredProperty.location}
+                    </p>
+
                     <p className="font-sans font-bold text-brand-gold mt-2.5">
-                      {Number(featuredProperty.price).toLocaleString('fr-FR')} {featuredProperty.priceUnit || 'FCFA'}
+                      {featuredPrice !== null ? (
+                        <>
+                          {featuredPrice}{' '}
+                          {featuredProperty.priceUnit || 'FCFA'}
+                        </>
+                      ) : (
+                        'Prix sur demande'
+                      )}
                     </p>
                   </div>
                 </Link>
               ) : (
                 <div className="bg-white/95 backdrop-blur rounded-[1.75rem] rounded-tr-md shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden p-6 text-center">
-                  <p className="font-sans font-semibold text-ink text-[14px]">Vos biens s'affichent ici</p>
+                  <p className="font-sans font-semibold text-ink text-[14px]">
+                    Vos biens s'affichent ici
+                  </p>
+
                   <p className="text-ink/45 text-[11.5px] font-light mt-1.5 leading-relaxed">
-                    Ajoutez un bien depuis l'espace admin et cochez « Mettre en avant » pour qu'il apparaisse à cet endroit.
+                    Ajoutez un bien depuis l'espace admin et cochez « Mettre en
+                    avant » pour qu'il apparaisse à cet endroit.
                   </p>
                 </div>
               )}
@@ -127,8 +257,16 @@ export default function Hero({ title, subtitle, featuredProperty }) {
         </div>
       </div>
 
-      <svg className="absolute bottom-0 left-0 w-full text-offwhite" style={{ transform: 'translateY(1px)' }} viewBox="0 0 1440 120" preserveAspectRatio="none">
-        <path d="M0,40 C 200,100 400,0 720,30 C 1040,60 1240,10 1440,50 L1440,120 L0,120 Z" fill="currentColor" />
+      <svg
+        className="absolute bottom-0 left-0 w-full text-offwhite"
+        style={{ transform: 'translateY(1px)' }}
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M0,40 C 200,100 400,0 720,30 C 1040,60 1240,10 1440,50 L1440,120 L0,120 Z"
+          fill="currentColor"
+        />
       </svg>
     </section>
   );
