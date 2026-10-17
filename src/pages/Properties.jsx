@@ -17,6 +17,12 @@ const TYPES = [
   { value: 'terrain', label: 'Terrain' },
   { value: 'bureau', label: 'Bureau' },
   { value: 'commerce', label: 'Commerce' },
+  { value: 'autre', label: 'Autre' },
+  { value: 'realisation_en_cours', label: 'Réalisation en cours' },
+  { value: 'projet_en_cours', label: 'Projet en cours' },
+  { value: 'immeuble', label: 'Immeuble' },
+  { value: 'studio', label: 'Studio' },
+  { value: 'mini_studio', label: 'Mini-studio' },
 ];
 
 const LISTING = [
@@ -28,8 +34,8 @@ const LISTING = [
 ];
 
 /**
- * Normalise les différents formats possibles de réponse de l'API.
- * Ne modifie et ne supprime aucune donnée côté serveur.
+ * Normalise les formats habituels de réponse de l'API.
+ * Cette fonction ne modifie aucune donnée côté serveur.
  */
 function extractProperties(response) {
   if (Array.isArray(response)) {
@@ -38,9 +44,12 @@ function extractProperties(response) {
 
   const candidates = [
     response?.data?.properties,
+    response?.data?.data?.properties,
     response?.data?.data,
+    response?.data?.results,
     response?.data,
     response?.properties,
+    response?.results,
   ];
 
   return candidates.find(Array.isArray) || [];
@@ -65,7 +74,6 @@ export default function Properties() {
       setError(false);
 
       try {
-        // N'envoie à l'API que les filtres renseignés.
         const params = Object.fromEntries(
           Object.entries(filters).filter(
             ([, value]) => value.trim() !== ''
@@ -86,7 +94,7 @@ export default function Properties() {
 
         if (!cancelled) {
           setError(true);
-          setProperties([]);
+          // Ne pas effacer les biens déjà chargés en cas d'erreur réseau.
         }
       } finally {
         if (!cancelled) {
@@ -115,7 +123,7 @@ export default function Properties() {
     <div>
       <SEO
         title="Nos biens immobiliers à Dakar"
-        description="Découvrez nos villas, appartements, maisons, chambres, terrains, bureaux et commerces à vendre ou à louer avec BF IMMO SARL à Dakar."
+        description="Découvrez nos villas, appartements, maisons, chambres, terrains, bureaux, commerces, studios et immeubles à vendre ou à louer avec BF IMMO SARL à Dakar."
         path="/biens"
       />
 
