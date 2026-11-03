@@ -6,28 +6,22 @@ import { getServices, getContent, getProperties } from '../api/client';
 export default function Home() {
   const [services, setServices] = useState([]);
   const [content, setContent] = useState({});
-  const [featuredProperty, setFeaturedProperty] = useState(null);
+  const [featuredProperties, setFeaturedProperties] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getServices(),
       getContent(),
-      // Un seul bien : celui coché "Mettre en avant" dans l'admin.
-      // S'il n'y en a pas encore, on retombe sur le tout dernier bien ajouté
-      // plutôt que de ne rien montrer.
-      getProperties({ featured: 'true', limit: 1 }).catch(() => []),
+      // Tous les biens actifs marqués "Mettre en avant" dans l'administration.
+      // Aucun bien non mis en avant n'est ajouté automatiquement au carrousel.
+      getProperties({ featured: 'true' }).catch(() => []),
     ])
       .then(async ([servicesData, contentData, featuredData]) => {
         setServices(servicesData);
         setContent(contentData);
 
-        if (featuredData.length > 0) {
-          setFeaturedProperty(featuredData[0]);
-        } else {
-          const fallback = await getProperties({ limit: 1 }).catch(() => []);
-          if (fallback.length > 0) setFeaturedProperty(fallback[0]);
-        }
+        setFeaturedProperties(Array.isArray(featuredData) ? featuredData : []);
       })
       .catch((err) => console.error('Erreur de chargement de l\'accueil :', err))
       .finally(() => setLoading(false));
@@ -38,7 +32,7 @@ export default function Home() {
       <Hero
         title={content['hero.title']}
         subtitle={content['hero.subtitle']}
-        featuredProperty={featuredProperty}
+        featuredProperties={featuredProperties}
       />
 
       {loading ? (
