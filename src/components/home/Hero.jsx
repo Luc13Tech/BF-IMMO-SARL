@@ -1,49 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, MapPin } from 'lucide-react';
 import Button from '../ui/Button';
+import AdsCarousel from './AdsCarousel';
 
-const roofDraw = {
-  hidden: { pathLength: 0, opacity: 0 },
-  visible: (i = 1) => ({
-    pathLength: 1,
-    opacity: 1,
-    transition: {
-      pathLength: {
-        delay: i * 0.3,
-        duration: 1.4,
-        ease: [0.65, 0, 0.35, 1],
-      },
-      opacity: { delay: i * 0.3, duration: 0.3 },
-    },
-  }),
-};
-
-function formatPrice(price) {
-  if (
-    price === null ||
-    price === undefined ||
-    (typeof price === 'string' && price.trim() === '')
-  ) {
-    return null;
-  }
-
-  const numericPrice = Number(price);
-
-  if (!Number.isFinite(numericPrice) || numericPrice < 0) {
-    return null;
-  }
-
-  return numericPrice.toLocaleString('fr-FR');
-}
-
-export default function Hero({ title, subtitle, featuredProperty }) {
+export default function Hero({ title, subtitle, featuredProperties = [] }) {
   const firstLine = title?.split(',')[0] || 'Votre bien';
-
-  const featuredPrice = featuredProperty
-    ? formatPrice(featuredProperty.price)
-    : null;
 
   return (
     <section className="relative bg-ink overflow-hidden pt-36 pb-40 md:pt-44 md:pb-56">
@@ -147,112 +109,34 @@ export default function Hero({ title, subtitle, featuredProperty }) {
           </motion.div>
         </div>
 
-        <div className="relative h-[360px] sm:h-[420px]">
-          <motion.svg
-            viewBox="0 0 300 170"
-            className="absolute inset-0 w-full h-full"
-            fill="none"
+        <div className="relative min-w-0 py-4 lg:py-8">
+          <motion.div
+            aria-hidden
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="mb-5 flex items-center justify-between gap-4"
           >
-            <motion.path
-              d="M20 150 L150 40 L280 150"
-              stroke="#D8BD7E"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              custom={0}
-              variants={roofDraw}
-              initial="hidden"
-              animate="visible"
-            />
-
-            <motion.path
-              d="M60 150 L150 70 L240 150"
-              stroke="#E2231A"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              custom={1}
-              variants={roofDraw}
-              initial="hidden"
-              animate="visible"
-            />
-          </motion.svg>
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-goldSoft">
+                Sélection BF IMMO
+              </p>
+              <h2 className="mt-1 text-xl sm:text-2xl font-bold text-white">
+                Nos biens à découvrir
+              </h2>
+            </div>
+            <span className="hidden sm:inline-flex rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-white/65">
+              À la une
+            </span>
+          </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 40, rotate: -3 }}
-            animate={{ opacity: 1, y: 0, rotate: -2 }}
-            transition={{
-              delay: 1.1,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="absolute right-2 bottom-4 sm:bottom-10 w-64 sm:w-72"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="relative"
           >
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            >
-              {featuredProperty ? (
-                // Toute la fiche devient cliquable, exactement comme une carte
-                // de "Nos biens" : clic -> page détail de ce bien précis.
-                <Link
-                  to={`/biens/${featuredProperty.slug || featuredProperty._id}`}
-                  className="block bg-white/95 backdrop-blur rounded-[1.75rem] rounded-tr-md shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden hover:shadow-[0_34px_70px_-16px_rgba(0,0,0,0.7)] transition-shadow"
-                >
-                  <div className="h-32 bg-gradient-to-br from-ink-soft to-ink relative overflow-hidden">
-                    {featuredProperty.images?.[0]?.url && (
-                      <img
-                        src={featuredProperty.images[0].url}
-                        alt={featuredProperty.title}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-
-                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white text-[10px] font-mono uppercase tracking-wide text-emerald-700">
-                      {featuredProperty.status === 'nouveau'
-                        ? 'Nouveau'
-                        : 'Disponible'}
-                    </span>
-                  </div>
-
-                  <div className="p-5">
-                    <p className="font-sans font-bold text-ink text-[15px]">
-                      {featuredProperty.title}
-                    </p>
-
-                    <p className="font-mono text-[10.5px] text-ink/50 mt-1">
-                      {featuredProperty.location}
-                    </p>
-
-                    <p className="font-sans font-bold text-brand-gold mt-2.5">
-                      {featuredPrice !== null ? (
-                        <>
-                          {featuredPrice}{' '}
-                          {featuredProperty.priceUnit || 'FCFA'}
-                        </>
-                      ) : (
-                        'Prix sur demande'
-                      )}
-                    </p>
-                  </div>
-                </Link>
-              ) : (
-                <div className="bg-white/95 backdrop-blur rounded-[1.75rem] rounded-tr-md shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden p-6 text-center">
-                  <p className="font-sans font-semibold text-ink text-[14px]">
-                    Vos biens s'affichent ici
-                  </p>
-
-                  <p className="text-ink/45 text-[11.5px] font-light mt-1.5 leading-relaxed">
-                    Ajoutez un bien depuis l'espace admin et cochez « Mettre en
-                    avant » pour qu'il apparaisse à cet endroit.
-                  </p>
-                </div>
-              )}
-            </motion.div>
+            <AdsCarousel properties={featuredProperties} autoPlayInterval={2000} />
           </motion.div>
         </div>
       </div>
