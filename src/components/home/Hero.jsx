@@ -149,7 +149,7 @@ export default function Hero({
         <div className="relative min-w-0">
           <AdsCarousel
             properties={featuredProperties}
-            autoPlayInterval={2000}
+            autoPlayInterval={3500}
           />
         </div>
 
