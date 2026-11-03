@@ -61,7 +61,7 @@ function formatPrice(price) {
 
 export default function AdsCarousel({
   properties = [],
-  autoPlayInterval = 2000,
+  autoPlayInterval = 3500,
 }) {
   const items = Array.isArray(properties)
     ? properties.filter(
@@ -70,38 +70,57 @@ export default function AdsCarousel({
     : [];
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
 
   // Réinitialiser la position si la liste des biens change.
   useEffect(() => {
     setCurrentIndex(0);
   }, [items.length]);
 
-  // Défilement automatique toutes les 2 secondes.
+  // Défilement automatique toutes les 3,5 secondes.
   useEffect(() => {
-    if (items.length < 2) return undefined;
+    if (!isAutoPlay || items.length < 2) {
+      return undefined;
+    }
 
     const interval = window.setInterval(() => {
       setCurrentIndex((previous) => (previous + 1) % items.length);
-    }, Math.max(2000, Number(autoPlayInterval) || 2000));
+    }, Math.max(2000, Number(autoPlayInterval) || 3500));
 
     return () => window.clearInterval(interval);
-  }, [items.length, autoPlayInterval]);
+  }, [items.length, autoPlayInterval, isAutoPlay]);
+
+  // Arrêter définitivement le défilement automatique
+  // dès que le visiteur utilise les commandes manuelles.
+  const stopAutoPlay = () => {
+    setIsAutoPlay(false);
+  };
 
   const previous = () => {
+    stopAutoPlay();
+
     setCurrentIndex((index) =>
       (index - 1 + items.length) % items.length
     );
   };
 
   const next = () => {
+    stopAutoPlay();
+
     setCurrentIndex((index) =>
       (index + 1) % items.length
     );
   };
 
+  const goTo = (index) => {
+    stopAutoPlay();
+    setCurrentIndex(index);
+  };
+
   if (items.length === 0) return null;
 
-  const property = items[currentIndex];
+  const safeIndex = currentIndex % items.length;
+  const property = items[safeIndex];
 
   const image =
     property.images?.[0]?.url ||
@@ -231,10 +250,7 @@ export default function AdsCarousel({
                   {image ? (
                     <motion.img
                       src={image}
-                      alt={
-                        property.title ||
-                        'Bien immobilier BF IMMO'
-                      }
+                      alt={property.title || 'Bien immobilier BF IMMO'}
                       loading="eager"
                       decoding="async"
                       initial={{ scale: 1.06 }}
@@ -285,8 +301,7 @@ export default function AdsCarousel({
                     <p className="flex items-center gap-2 text-sm font-semibold text-[#d52c36] sm:text-base">
                       <MapPin size={18} className="shrink-0" />
                       <span className="truncate">
-                        {property.location ||
-                          'Localisation sur demande'}
+                        {property.location || 'Localisation sur demande'}
                       </span>
                     </p>
 
@@ -295,9 +310,7 @@ export default function AdsCarousel({
                         size={19}
                         className="shrink-0 text-[#151a24]"
                       />
-                      <span>
-                        {property.title || typeLabel}
-                      </span>
+                      <span>{property.title || typeLabel}</span>
                     </h3>
                   </div>
 
@@ -335,13 +348,13 @@ export default function AdsCarousel({
                 <button
                   key={item._id || item.slug || index}
                   type="button"
-                  onClick={() => setCurrentIndex(index)}
+                  onClick={() => goTo(index)}
                   aria-label={`Afficher le bien ${index + 1}`}
                   aria-current={
-                    currentIndex === index ? 'true' : undefined
+                    safeIndex === index ? 'true' : undefined
                   }
                   className={`h-2.5 rounded-full transition-all duration-500 ${
-                    currentIndex === index
+                    safeIndex === index
                       ? 'w-8 bg-[#e7bd4d] shadow-[0_0_12px_rgba(231,189,77,0.55)]'
                       : 'w-2.5 bg-white/35 hover:bg-white/70'
                   }`}
@@ -352,7 +365,7 @@ export default function AdsCarousel({
 
           {/* Compteur */}
           <p className="mt-3 text-center font-mono text-[10px] tracking-widest text-white/45">
-            {String(currentIndex + 1).padStart(2, '0')}
+            {String(safeIndex + 1).padStart(2, '0')}
             {' / '}
             {String(items.length).padStart(2, '0')}
           </p>
