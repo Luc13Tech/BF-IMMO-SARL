@@ -96,4 +96,44 @@ export function PropertiesGridSkeleton({ count = 6 }) {
   );
 }
 
+/**
+ * Skeleton du carrousel des biens mis en avant.
+ * Une carte sur mobile et deux sur ordinateur.
+ */
+export function AdsCarouselSkeleton() {
+  return (
+    <div
+      className="grid grid-cols-1 gap-5 sm:grid-cols-2"
+      role="status"
+      aria-label="Chargement des biens à la une"
+    >
+      {[0, 1].map((item) => (
+        <div
+          key={item}
+          className={`overflow-hidden rounded-2xl border border-white/10 bg-white/5 ${
+            item === 1 ? 'hidden sm:block' : ''
+          }`}
+          aria-hidden="true"
+        >
+          <Skeleton className="aspect-[16/9] w-full rounded-none bg-white/10" />
+
+          <div className="space-y-3 p-4 sm:p-5">
+            <Skeleton className="h-4 w-1/3 bg-white/10" />
+            <Skeleton className="h-5 w-4/5 bg-white/10" />
+            <Skeleton className="h-3.5 w-1/2 bg-white/10" />
+
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <Skeleton className="h-5 w-2/5 bg-white/10" />
+              <Skeleton className="h-9 w-24 rounded-full bg-white/10" />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <span className="sr-only">
+        Chargement des biens à la une...
+      </span>
+    </div>
+  );
+}
 export default Skeleton;
