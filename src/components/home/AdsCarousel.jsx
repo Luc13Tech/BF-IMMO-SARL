@@ -1,368 +1,313 @@
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, MapPin, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  Home,
+  Sparkles,
+} from 'lucide-react';
 
 const LISTING_LABELS = {
-  vente: 'À vendre',
-  location: 'À louer',
-  location_nuitee: 'Par nuitée',
-  location_journaliere: 'À la journée',
-  Vente: 'À vendre',
-  Location: 'À louer',
-  Nuitée: 'Par nuitée',
-  'Location nuitée': 'Par nuitée',
-  'Location journalière': 'À la journée',
-};
-
-const PRICE_SUFFIX = {
-  location: '/mois',
-  location_nuitee: '/nuit',
-  location_journaliere: '/jour',
-  Location: '/mois',
-  Nuitée: '/nuit',
-  'Location nuitée': '/nuit',
-  'Location journalière': '/jour',
+  vente: 'À VENDRE',
+  Vente: 'À VENDRE',
+  location: 'À LOUER',
+  Location: 'À LOUER',
+  location_nuitee: 'LOCATION NUITÉE',
+  'Location nuitée': 'LOCATION NUITÉE',
+  Nuitée: 'LOCATION NUITÉE',
+  location_journaliere: 'LOCATION JOURNALIÈRE',
+  'Location journalière': 'LOCATION JOURNALIÈRE',
 };
 
 const STATUS_LABELS = {
-  disponible: 'Disponible',
-  nouveau: 'Nouveau',
-  sous_offre: 'Sous offre',
-  loue: 'Loué',
-  vendu: 'Vendu',
+  disponible: 'DISPONIBLE',
+  nouveau: 'NOUVEAUTÉ',
+  sous_offre: 'SOUS OFFRE',
+  loue: 'LOUÉ',
+  vendu: 'VENDU',
 };
 
-function formatPrice(value) {
-  if (value === null || value === undefined || String(value).trim() === '') {
+const TYPE_LABELS = {
+  villa: 'Villa',
+  appartement: 'Appartement',
+  maison: 'Maison',
+  chambre: 'Chambre',
+  hotel: 'Hôtel',
+  terrain: 'Terrain',
+  bureau: 'Bureau',
+  commerce: 'Commerce',
+  immeuble: 'Immeuble',
+  studio: 'Studio',
+  mini_studio: 'Mini-studio',
+  autre: 'Bien immobilier',
+};
+
+function formatPrice(price) {
+  if (price === null || price === undefined || price === '') {
     return null;
   }
 
-  const amount = Number(value);
+  const value = Number(price);
 
-  if (!Number.isFinite(amount) || amount < 0) {
+  if (!Number.isFinite(value) || value < 0) {
     return null;
   }
 
-  return amount.toLocaleString('fr-FR');
+  return value.toLocaleString('fr-FR');
 }
 
 export default function AdsCarousel({
   properties = [],
   autoPlayInterval = 2000,
 }) {
-  const trackRef = useRef(null);
-  const timerRef = useRef(null);
-
-  const [paused, setPaused] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   const items = Array.isArray(properties)
-    ? properties.filter((item) => item && (item._id || item.slug))
+    ? properties.filter((property) => property && (property._id || property.slug))
     : [];
 
-  const getStep = useCallback(() => {
-    const track = trackRef.current;
-    const card = track?.firstElementChild;
-
-    if (!track || !card) return 0;
-
-    const styles = window.getComputedStyle(track);
-    const gap = parseFloat(styles.columnGap || styles.gap) || 0;
-
-    return card.getBoundingClientRect().width + gap;
-  }, []);
-
-  const move = useCallback((direction = 1) => {
-    const track = trackRef.current;
-
-    if (!track || items.length < 2) return;
-
-    const step = getStep();
-
-    if (!step) return;
-
-    const max = track.scrollWidth - track.clientWidth;
-    const target = track.scrollLeft + step * direction;
-
-    if (direction > 0 && target >= max - 3) {
-      track.scrollTo({
-        left: 0,
-        behavior: 'smooth',
-      });
-    } else if (direction < 0 && track.scrollLeft <= 3) {
-      track.scrollTo({
-        left: max,
-        behavior: 'smooth',
-      });
-    } else {
-      track.scrollTo({
-        left: Math.max(0, Math.min(target, max)),
-        behavior: 'smooth',
-      });
-    }
-  }, [getStep, items.length]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    const track = trackRef.current;
+    setCurrentIndex(0);
+  }, [items.length]);
 
-    if (!track || items.length < 2 || paused) {
-      return undefined;
-    }
+  useEffect(() => {
+    if (items.length < 2) return undefined;
 
-    const reduceMotion = window.matchMedia?.(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-
-    if (reduceMotion) return undefined;
-
-    timerRef.current = window.setInterval(() => {
-      move(1);
+    const interval = window.setInterval(() => {
+      setCurrentIndex((previous) => (previous + 1) % items.length);
+      setImageLoaded(false);
     }, Math.max(2000, Number(autoPlayInterval) || 2000));
 
-    return () => {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    };
-  }, [autoPlayInterval, items.length, move, paused]);
+    return () => window.clearInterval(interval);
+  }, [items.length, autoPlayInterval]);
 
-  useEffect(() => {
-    const track = trackRef.current;
+  const previous = () => {
+    setCurrentIndex((index) => (index - 1 + items.length) % items.length);
+    setImageLoaded(false);
+  };
 
-    if (!track) return undefined;
+  const next = () => {
+    setCurrentIndex((index) => (index + 1) % items.length);
+    setImageLoaded(false);
+  };
 
-    const updateIndex = () => {
-      const step = getStep();
+  if (items.length === 0) return null;
 
-      if (step) {
-        setCurrentIndex(
-          Math.max(0, Math.round(track.scrollLeft / step))
-        );
-      }
-    };
+  const property = items[currentIndex];
 
-    track.addEventListener('scroll', updateIndex, {
-      passive: true,
-    });
+  const image = property.images?.[0]?.url || property.images?.[0] || null;
+  const price = formatPrice(property.price);
+  const listingLabel =
+    LISTING_LABELS[property.listingType] || 'BIEN IMMOBILIER';
+  const statusLabel =
+    STATUS_LABELS[property.status] || 'DISPONIBLE';
+  const typeLabel =
+    TYPE_LABELS[property.type] || 'Bien immobilier';
 
-    return () => {
-      track.removeEventListener('scroll', updateIndex);
-    };
-  }, [getStep, items.length]);
-
-  if (!items.length) return null;
+  const propertyUrl = `/biens/${property.slug || property._id}`;
 
   return (
     <section
-      className="relative z-20 -mt-12 px-4 pb-16 sm:-mt-16 sm:px-6 lg:px-8"
-      aria-label="Biens immobiliers en vedette"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setPaused(false);
-        }
-      }}
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setPaused(false)}
+      aria-label="Publicités immobilières BF IMMO"
+      className="relative mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 lg:px-8"
     >
-      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] rounded-tl-[4.5rem] border border-white/70 bg-[#fbfaf7] px-5 py-7 shadow-[0_28px_80px_-35px_rgba(0,0,0,0.48)] sm:px-8 sm:py-9 lg:px-10">
+      <div className="relative overflow-hidden rounded-[2rem] border border-[#d8b85c]/70 bg-[#101522] p-4 shadow-[0_0_30px_rgba(216,184,92,0.16),0_25px_65px_rgba(0,0,0,0.35)] sm:rounded-[2.5rem] sm:p-7 lg:p-9">
 
-        {/* Décoration du cadre */}
+        {/* Halo doré */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand-gold/10 blur-3xl"
+          className="pointer-events-none absolute -inset-1 rounded-[2.5rem] bg-gradient-to-br from-[#f5d77c]/15 via-transparent to-[#a77b24]/10 blur-xl"
         />
 
+        {/* Décoration intérieure */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-28 -left-16 h-64 w-64 rounded-full bg-brand-red/5 blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#d8b85c]/10 blur-3xl"
         />
 
-        {/* En-tête du carrousel */}
-        <div className="relative mb-6 flex items-end justify-between gap-4 sm:mb-8">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-gold">
-              <Sparkles size={13} />
-              Sélection BF IMMO
-            </span>
+        <div className="relative z-10">
 
-            <h2 className="mt-2 text-2xl font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
-              Nos biens en vedette
-            </h2>
+          {/* En-tête */}
+          <div className="mb-5 flex items-center justify-between gap-3 sm:mb-7">
 
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/65 sm:text-base">
-              Découvrez nos opportunités immobilières sélectionnées pour vous.
-            </p>
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ffe28a] to-[#c4942e] text-[#111827] shadow-[0_0_20px_rgba(226,190,86,0.3)] sm:h-14 sm:w-14">
+                <Home size={25} strokeWidth={2.5} />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Sparkles
+                    size={12}
+                    className="shrink-0 text-[#e7c66f]"
+                  />
+                  <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-[#e7c66f] sm:text-[10px]">
+                    Sélection BF IMMO
+                  </span>
+                </div>
+
+                <h2 className="mt-1 text-lg font-extrabold leading-tight text-white sm:text-2xl lg:text-3xl">
+                  Nos biens <span className="text-[#f2cc62]">en vedette</span>
+                </h2>
+              </div>
+            </div>
+
+            <Link
+              to="/biens"
+              className="shrink-0 text-xs font-bold text-white underline decoration-[#e5bd50] decoration-2 underline-offset-4 transition hover:text-[#f2cc62] sm:text-sm"
+            >
+              Voir tous
+              <ArrowRight className="ml-1 inline" size={15} />
+            </Link>
           </div>
 
-          {items.length > 1 && (
-            <div className="hidden shrink-0 items-center gap-2 sm:flex">
-              <button
-                type="button"
-                onClick={() => move(-1)}
-                aria-label="Biens précédents"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-sm transition hover:-translate-x-0.5 hover:border-brand-gold hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
-              >
-                <ArrowLeft size={18} />
-              </button>
+          {/* Publicité principale */}
+          <div className="relative">
 
+            {/* Flèche précédente */}
+            {items.length > 1 && (
               <button
                 type="button"
-                onClick={() => move(1)}
-                aria-label="Biens suivants"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-white shadow-md transition hover:translate-x-0.5 hover:bg-brand-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+                onClick={previous}
+                aria-label="Afficher le bien précédent"
+                className="absolute -left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e6c96e]/80 bg-[#111827] text-white shadow-[0_0_16px_rgba(0,0,0,0.4)] transition hover:scale-110 hover:bg-[#d6ad43] hover:text-[#101522] sm:-left-5 sm:h-14 sm:w-14"
               >
-                <ArrowRight size={18} />
+                <ArrowLeft size={22} />
               </button>
+            )}
+
+            {/* Carte du bien */}
+            <div
+              key={property._id || property.slug}
+              className="mx-auto max-w-4xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-white shadow-[0_12px_45px_rgba(0,0,0,0.35)] sm:rounded-[2rem]"
+            >
+
+              {/* Image */}
+              <Link
+                to={propertyUrl}
+                className="group relative block aspect-[16/9] overflow-hidden bg-[#252d3d] sm:aspect-[16/8]"
+              >
+                {image && (
+                  <img
+                    src={image}
+                    alt={property.title || 'Bien immobilier BF IMMO'}
+                    loading="eager"
+                    decoding="async"
+                    onLoad={() => setImageLoaded(true)}
+                    className={`h-full w-full object-cover transition duration-700 group-hover:scale-[1.035] ${
+                      imageLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                )}
+
+                {!image && (
+                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#1b2638] to-[#080d18]">
+                    <Home size={55} className="text-[#d6b65d]/60" />
+                  </div>
+                )}
+
+                {/* Voile pour la lisibilité des étiquettes */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/20" />
+
+                {/* Type de transaction */}
+                <span className="absolute left-4 top-4 rounded-full border border-white/30 bg-[#e7bd4d] px-4 py-2 text-[10px] font-extrabold tracking-wider text-[#101522] shadow-lg sm:left-6 sm:top-6 sm:px-6 sm:py-3 sm:text-sm">
+                  {listingLabel}
+                </span>
+
+                {/* Statut */}
+                <span className="absolute right-4 top-4 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-[9px] font-bold tracking-wider text-white backdrop-blur-md sm:right-6 sm:top-6 sm:text-[10px]">
+                  {statusLabel}
+                </span>
+
+                {/* Prix sur la photo */}
+                <div className="absolute bottom-4 right-4 max-w-[85%] rounded-xl border border-[#ffe28a]/70 bg-gradient-to-r from-[#f9dc78] to-[#d9aa35] px-4 py-3 text-right shadow-[0_5px_25px_rgba(0,0,0,0.25)] sm:bottom-6 sm:right-6 sm:rounded-2xl sm:px-6 sm:py-4">
+                  <p className="text-base font-black leading-tight text-[#101522] sm:text-2xl lg:text-3xl">
+                    {price !== null
+                      ? `${price} ${property.priceUnit || 'FCFA'}`
+                      : 'Prix sur demande'}
+                  </p>
+                </div>
+              </Link>
+
+              {/* Informations sous la photo */}
+              <Link
+                to={propertyUrl}
+                className="grid gap-3 px-5 py-5 sm:grid-cols-2 sm:items-center sm:px-8 sm:py-6"
+              >
+                <div className="min-w-0 space-y-2">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-[#d52c36] sm:text-base">
+                    <MapPin size={18} className="shrink-0" />
+                    <span className="truncate">
+                      {property.location || 'Localisation sur demande'}
+                    </span>
+                  </p>
+
+                  <h3 className="flex items-center gap-2 text-base font-extrabold leading-snug text-[#151a24] sm:text-xl">
+                    <Home size={19} className="shrink-0 text-[#151a24]" />
+                    <span>{property.title || typeLabel}</span>
+                  </h3>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <span className="rounded-full bg-[#f4f0e5] px-3 py-2 text-xs font-bold text-[#8c6b25]">
+                    {typeLabel}
+                  </span>
+
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#111827] px-4 py-3 text-xs font-bold text-white transition hover:bg-[#d5ad46] hover:text-[#101522]">
+                    Voir le bien
+                    <ArrowRight size={15} />
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Flèche suivante */}
+            {items.length > 1 && (
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Afficher le bien suivant"
+                className="absolute -right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e6c96e]/80 bg-[#111827] text-white shadow-[0_0_16px_rgba(0,0,0,0.4)] transition hover:scale-110 hover:bg-[#d6ad43] hover:text-[#101522] sm:-right-5 sm:h-14 sm:w-14"
+              >
+                <ArrowRight size={22} />
+              </button>
+            )}
+          </div>
+
+          {/* Indicateurs de navigation */}
+          {items.length > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2.5">
+              {items.map((item, index) => (
+                <button
+                  key={item._id || item.slug || index}
+                  type="button"
+                  onClick={() => {
+                    setCurrentIndex(index);
+                    setImageLoaded(false);
+                  }}
+                  aria-label={`Afficher le bien ${index + 1}`}
+                  aria-current={currentIndex === index ? 'true' : undefined}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    currentIndex === index
+                      ? 'w-8 bg-[#e7bd4d] shadow-[0_0_12px_rgba(231,189,77,0.55)]'
+                      : 'w-2.5 bg-white/35 hover:bg-white/70'
+                  }`}
+                />
+              ))}
             </div>
           )}
+
+          {/* Compteur */}
+          <p className="mt-3 text-center font-mono text-[10px] tracking-widest text-white/45">
+            {String(currentIndex + 1).padStart(2, '0')}
+            {' / '}
+            {String(items.length).padStart(2, '0')}
+          </p>
+
         </div>
-
-        {/* Cartes des biens */}
-        <div
-          ref={trackRef}
-          className="relative flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6"
-          style={{ scrollBehavior: 'smooth' }}
-          aria-live="off"
-        >
-          {items.map((property, index) => {
-            const image =
-              property.images?.[0]?.url || property.images?.[0];
-
-            const price = formatPrice(property.price);
-            const listing = property.listingType;
-
-            const status =
-              STATUS_LABELS[
-                String(property.status || '').toLowerCase()
-              ] || 'Disponible';
-
-            const path = `/biens/${property.slug || property._id}`;
-
-            return (
-              <article
-                key={property._id || property.slug}
-                className="group min-w-0 basis-[88%] snap-start sm:basis-[calc(50%-10px)] lg:basis-[calc(33.333%-16px)]"
-              >
-                <Link
-                  to={path}
-                  aria-label={`Voir le bien : ${property.title || 'Bien immobilier'}`}
-                  className="block h-full overflow-hidden rounded-[1.65rem] rounded-br-[2.8rem] border border-ink/5 bg-white shadow-[0_14px_35px_-24px_rgba(25,28,35,0.55)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_42px_-24px_rgba(25,28,35,0.55)]"
-                >
-                  {/* Photo */}
-                  <div className="relative aspect-[16/10] overflow-hidden bg-ink/10">
-                    {image ? (
-                      <img
-                        src={image}
-                        alt={property.title || 'Bien immobilier BF IMMO'}
-                        loading={index < 3 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-br from-ink-soft via-ink to-black" />
-                    )}
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
-
-                    <span className="absolute left-4 top-4 rounded-full border border-white/30 bg-brand-gold px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider text-ink shadow-lg">
-                      {LISTING_LABELS[listing] || listing || 'Offre'}
-                    </span>
-
-                    <span className="absolute right-4 top-4 rounded-full border border-white/35 bg-black/45 px-3 py-2 text-[10px] font-semibold text-white shadow-sm backdrop-blur-md">
-                      {status}
-                    </span>
-                  </div>
-
-                  {/* Informations du bien */}
-                  <div className="flex min-h-[190px] flex-col p-4 sm:p-5">
-                    <p className="mb-2 flex items-start gap-2 text-xs leading-relaxed text-ink/60 sm:text-[13px]">
-                      <MapPin
-                        size={15}
-                        className="mt-0.5 shrink-0 text-brand-gold"
-                      />
-
-                      <span>
-                        {property.location || 'Localisation sur demande'}
-                      </span>
-                    </p>
-
-                    <h3 className="text-lg font-extrabold leading-snug text-ink sm:text-xl">
-                      {property.title || 'Bien immobilier'}
-                    </h3>
-
-                    <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-5">
-                      <p className="text-base font-extrabold leading-tight text-brand-red sm:text-lg">
-                        {price !== null ? (
-                          <>
-                            {price}{' '}
-                            <span className="whitespace-nowrap">
-                              {property.priceUnit || 'FCFA'}
-                              {PRICE_SUFFIX[listing] || ''}
-                            </span>
-                          </>
-                        ) : (
-                          'Prix sur demande'
-                        )}
-                      </p>
-
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-gold/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-ink transition group-hover:border-brand-gold group-hover:bg-brand-gold/10">
-                        Voir le bien
-                        <ArrowRight size={13} />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </article>
-            );
-          })}
-        </div>
-
-        {/* Barre de progression */}
-        {items.length > 1 && (
-          <div className="relative mt-1 flex items-center gap-3">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand-gold to-brand-red transition-[width] duration-300"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    ((currentIndex + 1) / items.length) * 100
-                  )}%`,
-                }}
-              />
-            </div>
-
-            <span className="min-w-[3.5rem] text-right font-mono text-[10px] tabular-nums text-ink/50">
-              {Math.min(currentIndex + 1, items.length)} / {items.length}
-            </span>
-          </div>
-        )}
-
-        {/* Flèches sur mobile */}
-        {items.length > 1 && (
-          <div className="mt-5 flex justify-center gap-3 sm:hidden">
-            <button
-              type="button"
-              onClick={() => move(-1)}
-              aria-label="Biens précédents"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-sm"
-            >
-              <ArrowLeft size={18} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => move(1)}
-              aria-label="Biens suivants"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-white shadow-sm"
-            >
-              <ArrowRight size={18} />
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );
