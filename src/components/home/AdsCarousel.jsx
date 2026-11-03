@@ -90,8 +90,7 @@ export default function AdsCarousel({
     return () => window.clearInterval(interval);
   }, [items.length, autoPlayInterval, isAutoPlay]);
 
-  // Arrêter définitivement le défilement automatique
-  // dès que le visiteur utilise les commandes manuelles.
+  // Arrêter le défilement automatique dès qu'une commande manuelle est utilisée.
   const stopAutoPlay = () => {
     setIsAutoPlay(false);
   };
@@ -149,9 +148,10 @@ export default function AdsCarousel({
       aria-label="Publicités immobilières BF IMMO"
       className="relative mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 lg:px-8"
     >
-      <div className="relative overflow-hidden rounded-[2rem] border border-[#d8b85c]/70 bg-[#101522] p-4 shadow-[0_0_30px_rgba(216,184,92,0.16),0_25px_65px_rgba(0,0,0,0.35)] sm:rounded-[2.5rem] sm:p-7 lg:p-9">
+      {/* Conteneur extérieur sans cadre doré */}
+      <div className="relative overflow-hidden bg-transparent p-0">
 
-        {/* Halo doré */}
+        {/* Effets lumineux discrets */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#d8b85c]/10 blur-3xl"
@@ -164,32 +164,27 @@ export default function AdsCarousel({
 
         <div className="relative z-10">
 
-          {/* En-tête */}
+          {/* En-tête sans icône de bâtiment */}
           <div className="mb-5 flex items-center justify-between gap-3 sm:mb-7">
 
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ffe28a] to-[#c4942e] text-[#111827] shadow-[0_0_20px_rgba(226,190,86,0.3)] sm:h-14 sm:w-14">
-                <Home size={25} strokeWidth={2.5} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Sparkles
+                  size={12}
+                  className="shrink-0 text-[#e7c66f]"
+                />
+
+                <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-[#e7c66f] sm:text-[10px]">
+                  Sélection BF IMMO
+                </span>
               </div>
 
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <Sparkles
-                    size={12}
-                    className="shrink-0 text-[#e7c66f]"
-                  />
-                  <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-[#e7c66f] sm:text-[10px]">
-                    Sélection BF IMMO
-                  </span>
-                </div>
-
-                <h2 className="mt-1 text-lg font-extrabold leading-tight text-white sm:text-2xl lg:text-3xl">
-                  Nos biens{' '}
-                  <span className="text-[#f2cc62]">
-                    en vedette
-                  </span>
-                </h2>
-              </div>
+              <h2 className="mt-1 text-lg font-extrabold leading-tight text-white sm:text-2xl lg:text-3xl">
+                Nos biens{' '}
+                <span className="text-[#f2cc62]">
+                  en vedette
+                </span>
+              </h2>
             </div>
 
             <Link
@@ -300,6 +295,7 @@ export default function AdsCarousel({
                   <div className="min-w-0 space-y-2">
                     <p className="flex items-center gap-2 text-sm font-semibold text-[#d52c36] sm:text-base">
                       <MapPin size={18} className="shrink-0" />
+
                       <span className="truncate">
                         {property.location || 'Localisation sur demande'}
                       </span>
@@ -310,7 +306,10 @@ export default function AdsCarousel({
                         size={19}
                         className="shrink-0 text-[#151a24]"
                       />
-                      <span>{property.title || typeLabel}</span>
+
+                      <span>
+                        {property.title || typeLabel}
+                      </span>
                     </h3>
                   </div>
 
