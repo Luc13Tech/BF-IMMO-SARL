@@ -1,7 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import Hero from '../components/home/Hero';
 import ServicesGrid from '../components/home/ServicesGrid';
-import { getServices, getContent, getProperties } from '../api/client';
+import {
+  getServices,
+  getContent,
+  getProperties,
+} from '../api/client';
 
 export default function Home() {
   const [services, setServices] = useState([]);
@@ -13,18 +18,34 @@ export default function Home() {
     Promise.all([
       getServices(),
       getContent(),
-      // Tous les biens actifs marqués "Mettre en avant" dans l'administration.
-      // Aucun bien non mis en avant n'est ajouté automatiquement au carrousel.
+
+      // Récupération de tous les biens actifs
+      // cochés « Mettre en avant » dans l'administration.
       getProperties({ featured: 'true' }).catch(() => []),
     ])
       .then(async ([servicesData, contentData, featuredData]) => {
         setServices(servicesData);
         setContent(contentData);
 
-        setFeaturedProperties(Array.isArray(featuredData) ? featuredData : []);
+        if (featuredData.length > 0) {
+          // Tous les biens mis en vedette sont transmis au carrousel.
+          setFeaturedProperties(featuredData);
+        } else {
+          // Si aucun bien n'est mis en vedette,
+          // on conserve le comportement de secours de l'ancien accueil.
+          const fallback = await getProperties({ limit: 1 }).catch(() => []);
+          setFeaturedProperties(fallback);
+        }
       })
-      .catch((err) => console.error('Erreur de chargement de l\'accueil :', err))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        console.error(
+          "Erreur de chargement de l'accueil :",
+          err
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (
