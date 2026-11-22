@@ -97,6 +97,22 @@ export default function Footer({ content = {} }) {
               )
             )}
           </ul>
+
+          <h4 className="font-mono text-[11px] tracking-[0.2em] uppercase text-brand-goldSoft mt-8 mb-4">
+            Explorer
+          </h4>
+          <ul className="space-y-2.5 text-sm text-white/75 font-light">
+            <li>
+              <Link to="/biens" className="hover:text-white transition-colors">
+                Nos biens
+              </Link>
+            </li>
+            <li>
+              <Link to="/galerie-video" className="hover:text-white transition-colors">
+                Galerie Vidéo
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
 

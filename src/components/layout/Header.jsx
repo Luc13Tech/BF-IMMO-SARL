@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, User, Heart } from 'lucide-react';
 import logo from '../../assets/images/logo.png';
 import { useUserAuth } from '../../context/UserAuthContext';
+import AppActions from '../ui/AppActions';
 
 const NAV = [
   { label: 'Achat', to: '/services/achat' },
@@ -13,6 +14,7 @@ const NAV = [
   { label: 'Conseils', to: '/services/conseils' },
   { label: 'BTP', to: '/services/btp' },
   { label: 'Nos biens', to: '/biens' },
+  { label: 'Galerie Vidéo', short: 'Vidéos', to: '/galerie-video' },
   { label: 'Contact', to: '/contact' },
 ];
 
@@ -65,20 +67,27 @@ export default function Header() {
           </Link>
 
           {/* Nav desktop */}
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-7">
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `relative py-2 text-[13px] font-medium tracking-wide uppercase text-white/75 hover:text-white transition-colors group ${
+                  `relative py-2 text-[12px] xl:text-[13px] font-medium tracking-wide uppercase text-white/75 hover:text-white transition-colors group ${
                     isActive ? 'text-white' : ''
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    {item.label}
+                    {item.short ? (
+                      <>
+                        <span className="xl:hidden">{item.short}</span>
+                        <span className="hidden xl:inline">{item.label}</span>
+                      </>
+                    ) : (
+                      item.label
+                    )}
                     <span
                       className={`absolute left-1/2 -translate-x-1/2 -bottom-0.5 h-[1.5px] bg-brand-gold transition-all duration-300 ${
                         isActive ? 'w-full' : 'w-0 group-hover:w-full'
@@ -102,10 +111,12 @@ export default function Header() {
                   </span>
                 )}
               </span>
-              <span className="text-[13px] font-medium uppercase tracking-wide">
+              <span className="text-[12px] xl:text-[13px] font-medium uppercase tracking-wide">
                 {isAuthenticated ? user?.fullName?.split(' ')[0] : 'Connexion'}
               </span>
             </Link>
+
+            <AppActions variant="popover" />
           </nav>
 
           <div className="flex items-center gap-4 lg:hidden">
@@ -136,7 +147,7 @@ export default function Header() {
             animate={{ clipPath: 'circle(150% at 100% 0%)' }}
             exit={{ clipPath: 'circle(0% at 100% 0%)' }}
             transition={{ duration: 0.6, ease: [0.65, 0, 0.35, 1] }}
-            className="fixed inset-0 z-50 bg-ink flex flex-col"
+            className="fixed inset-0 z-50 bg-ink flex flex-col overflow-y-auto"
           >
             <div className="flex justify-end p-6">
               <button onClick={() => setOpen(false)} aria-label="Fermer le menu" className="text-white p-2">
@@ -175,6 +186,15 @@ export default function Header() {
                   <User size={20} />
                   {isAuthenticated ? 'Mon compte' : 'Connexion'}
                 </NavLink>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 + (NAV.length + 1) * 0.06 }}
+                className="pb-10"
+              >
+                <AppActions variant="list" onAction={() => setOpen(false)} />
               </motion.div>
             </nav>
           </motion.div>

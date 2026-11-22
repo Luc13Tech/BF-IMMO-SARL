@@ -8,6 +8,8 @@ import Home from './pages/Home';
 import ServicePage from './pages/ServicePage';
 import Properties from './pages/Properties';
 import PropertyDetail from './pages/PropertyDetail';
+import VideoGallery from './pages/VideoGallery';
+import VideoDetail from './pages/VideoDetail';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -41,6 +43,8 @@ function PublicLayout({ content }) {
           <Route path="/services/:slug" element={<ServicePage />} />
           <Route path="/biens" element={<Properties />} />
           <Route path="/biens/:id" element={<PropertyDetail />} />
+          <Route path="/galerie-video" element={<VideoGallery />} />
+          <Route path="/galerie-video/:id" element={<VideoDetail />} />
           <Route path="/a-propos" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/connexion" element={<Login />} />

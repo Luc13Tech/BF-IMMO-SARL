@@ -24,6 +24,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Version du cache du Service Worker : à incrémenter à chaque livraison.
+        cacheId: 'bfimmo-v1.5.0',
+
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
 
         // Indispensable pour une SPA : toute navigation vers une page qui

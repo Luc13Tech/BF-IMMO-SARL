@@ -68,6 +68,10 @@ export const uploadMultipleImages = (files, folder = 'misc') => {
 
 export const deleteImage = (publicId) => api.delete(`/upload/${encodeURIComponent(publicId)}`).then((r) => r.data);
 
+// Vidéos : signature de téléversement direct vers Cloudinary + suppression d'une vidéo abandonnée
+export const getVideoUploadSignature = () => api.post('/upload/video-signature').then((r) => r.data.data);
+export const deleteVideoAsset = (publicId) => api.delete(`/upload/video/${encodeURIComponent(publicId)}`).then((r) => r.data);
+
 // Base de connaissance de l'Assistant IA (admin)
 export const getAdminFaqs = () => api.get('/ai-assistant/admin/faqs').then((r) => r.data.data);
 export const createFaq = (payload) => api.post('/ai-assistant/admin/faqs', payload).then((r) => r.data.data);

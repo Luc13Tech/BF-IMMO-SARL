@@ -13,10 +13,14 @@ import {
   CheckCircle2,
   Link2,
   Check,
+  Play,
+  ArrowRight,
 } from 'lucide-react';
 import { getProperty, submitLead } from '../api/client';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import SEO, { SITE_URL } from '../components/ui/SEO';
+import VideoPlayer from '../components/video/VideoPlayer';
+import { hasPhotos, hasVideos, propertyCover, videoPath } from '../utils/video';
 
 const LISTING_LABELS = {
   vente: 'À vendre',
@@ -240,7 +244,7 @@ export default function PropertyDetail() {
         title={`${property.title} — ${property.location}`}
         description={seoDescription}
         path={canonicalPath}
-        image={property.images?.[0]?.url}
+        image={propertyCover(property) || undefined}
         type="product"
       />
 
@@ -261,10 +265,39 @@ export default function PropertyDetail() {
 
         <div className="grid lg:grid-cols-[1.4fr_1fr] gap-10">
           <div>
-            <PropertyGallery
-              images={property.images}
-              title={property.title}
-            />
+            {hasPhotos(property) || !hasVideos(property) ? (
+              <PropertyGallery
+                images={property.images}
+                title={property.title}
+              />
+            ) : (
+              <VideoPlayer
+                key={property.videos[0]._id || property.videos[0].url}
+                video={property.videos[0]}
+              />
+            )}
+
+            {hasVideos(property) && (
+              <Link
+                to={videoPath(property, property.videos[0])}
+                className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-soft transition-shadow hover:shadow-[0_18px_40px_-24px_rgba(30,32,39,0.45)]"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-red text-white">
+                    <Play size={15} className="ml-0.5 fill-white" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold text-ink">
+                      Voir {property.videos.length > 1 ? `les ${property.videos.length} vidéos` : 'la vidéo'} de ce bien
+                    </span>
+                    <span className="block text-xs text-ink/50">
+                      Copiez et partagez le lien de chaque vidéo
+                    </span>
+                  </span>
+                </span>
+                <ArrowRight size={16} className="shrink-0 text-ink/40" aria-hidden="true" />
+              </Link>
+            )}
 
             <div className="flex items-start justify-between gap-4 mt-8">
               <div>

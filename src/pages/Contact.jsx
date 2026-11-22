@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Loader2, Send, CheckCircle2 } from 'lucide-react';
 import { getContent, submitLead } from '../api/client';
 import MapEmbed from '../components/ui/MapEmbed';
+import AppActions from '../components/ui/AppActions';
 
 export default function Contact() {
   const [content, setContent] = useState({});
@@ -146,6 +147,10 @@ export default function Contact() {
             </form>
           )}
         </motion.div>
+      </div>
+
+      <div className="container-bf mt-14">
+        <AppActions variant="card" />
       </div>
     </div>
   );

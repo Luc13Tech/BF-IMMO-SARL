@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Loader2, Trash2, X, ImagePlus, Save, Pencil } from 'lucide-react';
+import { Plus, Loader2, Trash2, X, ImagePlus, Save, Pencil, Film } from 'lucide-react';
 import {
   getAllPropertiesAdmin, createProperty, updateProperty, deleteProperty,
-  uploadMultipleImages, deleteImage,
+  uploadMultipleImages, deleteImage, deleteVideoAsset,
 } from '../api/client';
+import PropertyVideosField from './PropertyVideosField';
 
 // Types de biens existants et nouveaux types autorisés par le backend.
 const TYPE_OPTIONS = [
@@ -61,6 +62,7 @@ const EMPTY = {
   description: '',
   status: 'disponible',
   images: [],
+  videos: [],
   featured: false,
   active: true,
 };
@@ -92,11 +94,31 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
     ...(property || {}),
     price: property?.price ?? '',
     images: Array.isArray(property?.images) ? property.images : [],
+    videos: Array.isArray(property?.videos) ? property.videos : [],
   }));
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [videoBusy, setVideoBusy] = useState(false);
   const fileInputRef = useRef(null);
+  // Vidéos téléversées pendant cette ouverture de l'éditeur (nettoyées si on annule).
+  const sessionVideoIds = useRef(new Set());
+
+  function updateVideos(next) {
+    setDraft((d) => ({
+      ...d,
+      videos: typeof next === 'function' ? next(Array.isArray(d.videos) ? d.videos : []) : next,
+    }));
+  }
+
+  // Annulation : supprime de Cloudinary les vidéos téléversées mais jamais enregistrées.
+  function handleCancel() {
+    sessionVideoIds.current.forEach((publicId) => {
+      deleteVideoAsset(publicId).catch(() => {});
+    });
+    sessionVideoIds.current.clear();
+    onClose();
+  }
 
   async function handleFiles(e) {
     const files = e.target.files;
@@ -133,7 +155,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
   }
 
   async function handleSave() {
-    if (saving || uploading) return;
+    if (saving || uploading || videoBusy) return;
 
     if (!draft.title.trim()) {
       alert('Veuillez renseigner le titre du bien.');
@@ -167,6 +189,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
             ? null
             : Number(draft.price),
         images: Array.isArray(draft.images) ? draft.images : [],
+        videos: Array.isArray(draft.videos) ? draft.videos : [],
       };
 
       if (draft._id) {
@@ -177,6 +200,8 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
         onSaved(created, true);
       }
 
+      // Enregistré : les vidéos de la session font maintenant partie du bien.
+      sessionVideoIds.current.clear();
       onClose();
     } catch (err) {
       alert(err?.response?.data?.message || "Erreur lors de l'enregistrement.");
@@ -191,7 +216,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
+      onClick={handleCancel}
     >
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
@@ -206,7 +231,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
           </h3>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCancel}
             className="text-ink/40 hover:text-ink"
             aria-label="Fermer"
           >
@@ -377,6 +402,13 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
             </p>
           </div>
 
+          <PropertyVideosField
+            videos={draft.videos}
+            onChange={updateVideos}
+            sessionIds={sessionVideoIds}
+            onBusyChange={setVideoBusy}
+          />
+
           <label className="flex items-center gap-2 text-sm text-ink/60">
             <input
               type="checkbox"
@@ -390,7 +422,7 @@ function PropertyEditorModal({ property, onClose, onSaved }) {
         <motion.button
           type="button"
           onClick={handleSave}
-          disabled={saving || uploading}
+          disabled={saving || uploading || videoBusy}
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
           className="mt-6 w-full flex items-center justify-center gap-2 bg-brand-red text-white font-semibold py-3.5 rounded-full disabled:opacity-70"
@@ -409,6 +441,7 @@ export default function PropertiesManager() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [mediaFilter, setMediaFilter] = useState('');
 
   function load() {
     setLoading(true);
@@ -440,7 +473,7 @@ export default function PropertiesManager() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Supprimer ce bien et ses photos définitivement ?')) return;
+    if (!confirm('Supprimer ce bien, ses photos et ses vidéos définitivement ?')) return;
 
     try {
       await deleteProperty(id);
@@ -450,6 +483,18 @@ export default function PropertiesManager() {
     }
   }
 
+  const visibleProperties = properties.filter((p) => {
+    const photos = Array.isArray(p.images) && p.images.length > 0;
+    const vids = Array.isArray(p.videos) && p.videos.length > 0;
+    switch (mediaFilter) {
+      case 'videos': return vids;
+      case 'videos_only': return vids && !photos;
+      case 'photos_only': return photos && !vids;
+      case 'none': return !photos && !vids;
+      default: return true;
+    }
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -458,7 +503,7 @@ export default function PropertiesManager() {
             Biens immobiliers
           </h1>
           <p className="text-ink/55 font-light mt-2">
-            {properties.length} bien(s) — ajoutez des photos directement depuis votre galerie.
+            {properties.length} bien(s) — ajoutez des photos et des vidéos directement depuis votre galerie.
           </p>
         </div>
 
@@ -466,11 +511,26 @@ export default function PropertiesManager() {
           type="button"
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => setEditing({ ...EMPTY, images: [] })}
+          onClick={() => setEditing({ ...EMPTY, images: [], videos: [] })}
           className="flex items-center gap-2 bg-ink text-white text-sm font-semibold px-5 py-3 rounded-full"
         >
           <Plus size={16} /> Ajouter un bien
         </motion.button>
+      </div>
+
+      <div className="mt-6">
+        <select
+          value={mediaFilter}
+          onChange={(e) => setMediaFilter(e.target.value)}
+          aria-label="Filtrer par médias"
+          className="px-4 py-2.5 rounded-xl border border-line bg-white text-sm outline-none focus:border-brand-gold"
+        >
+          <option value="">Tous les biens</option>
+          <option value="videos">Avec vidéo</option>
+          <option value="videos_only">Vidéo uniquement (sans photo)</option>
+          <option value="photos_only">Photos uniquement (sans vidéo)</option>
+          <option value="none">Sans photo ni vidéo</option>
+        </select>
       </div>
 
       {loading ? (
@@ -479,7 +539,7 @@ export default function PropertiesManager() {
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
-          {properties.map((p) => (
+          {visibleProperties.map((p) => (
             <motion.div
               key={p._id}
               initial={{ opacity: 0, y: 16 }}
@@ -487,11 +547,25 @@ export default function PropertiesManager() {
               className="bg-white rounded-[20px] overflow-hidden shadow-soft"
             >
               <div className="h-36 bg-gradient-to-br from-ink-soft to-ink relative">
-                {p.images?.[0]?.url && (
-                  <img src={p.images[0].url} alt="" className="w-full h-full object-cover" />
+                {(p.images?.[0]?.url || p.videos?.[0]?.thumbnail) && (
+                  <img
+                    src={p.images?.[0]?.url || p.videos?.[0]?.thumbnail}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 )}
                 <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 text-[10px] font-mono uppercase">
                   {p.status}
+                </span>
+                <span className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-full bg-ink/75 text-white text-[10px] font-mono">
+                    {(p.images?.length || 0)} photo{(p.images?.length || 0) > 1 ? 's' : ''}
+                  </span>
+                  {p.videos?.length > 0 && (
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-red text-white text-[10px] font-mono">
+                      <Film size={10} /> {p.videos.length} vidéo{p.videos.length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </span>
               </div>
 

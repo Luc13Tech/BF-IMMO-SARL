@@ -9,6 +9,7 @@ import {
   Heart,
   Link2,
   Check,
+  Play,
 } from 'lucide-react';
 import { useUserAuth } from '../../context/UserAuthContext';
 import { SITE_URL } from '../ui/SEO';
@@ -89,7 +90,8 @@ function formatPrice(price) {
 }
 
 export default function PropertyCard({ property, index = 0 }) {
-  const cover = property.images?.[0]?.url;
+  const cover = property.images?.[0]?.url || property.videos?.[0]?.thumbnail;
+  const videoCount = Array.isArray(property.videos) ? property.videos.length : 0;
   const offset = index % 3 === 1 ? 'lg:-translate-y-3' : '';
 
   const { isAuthenticated, isFavorite, toggleFavorite } = useUserAuth();
@@ -170,6 +172,13 @@ export default function PropertyCard({ property, index = 0 }) {
           >
             {STATUS_LABELS[property.status] || 'Disponible'}
           </span>
+
+          {videoCount > 0 && (
+            <span className="absolute bottom-4 left-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-red text-white text-[10.5px] font-mono uppercase tracking-wide">
+              <Play size={10} className="fill-white" aria-hidden="true" />
+              {videoCount > 1 ? `${videoCount} vidéos` : 'Vidéo'}
+            </span>
+          )}
 
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="px-3 py-1.5 rounded-full bg-ink/70 backdrop-blur text-white text-[10.5px] font-mono uppercase tracking-wide">
